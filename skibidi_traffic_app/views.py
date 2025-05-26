@@ -6,6 +6,9 @@ from .forms import SignUpForm
 from .forms import CustomAuthenticationForm
 from django.contrib.auth.forms import PasswordChangeForm
 import logging
+from django.views.decorators.csrf import csrf_exempt
+
+
 logger = logging.getLogger('django')
 
 def home(request):
@@ -92,3 +95,42 @@ def change_password_view(request):
     else:
         form = PasswordChangeForm(user=request.user)
     return render(request, 'change_password.html', {'form': form})
+
+def cityflow_view(request):
+    return render(request, 'cityflow.html')
+
+import subprocess
+from django.http import JsonResponse
+def run_simulation(request):
+    try:
+        result = subprocess.run([
+            'docker', 'run', 
+            '-v', 'c:/Users/mceza/Desktop/MDS_Project_Traffic_Cezara/MDS_Project_Traffic_Cezara/cityflow:/workspace',
+            '-w', '/workspace/frontend',
+            'cityflowproject/cityflow:latest', 'python', 'main.py'
+        ], capture_output=True, text=True, check=True)
+
+
+        return JsonResponse({"status": "ok", "output": result.stdout})
+    except subprocess.CalledProcessError as e:
+        return JsonResponse({"status": "error", "output": e.stderr}, status=500)
+
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt  # dezactivează CSRF pentru test, după poți implementa token
+def write_roadnet_js(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            content = json.dumps(data, indent=2)
+    
+            # scrie în fișier (cale relativă la proiect, ajustează după nevoie)
+            with open('cityflow/frontend/roadnet.json', 'w', encoding='utf-8') as f:
+                f.write(content)
+            
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)

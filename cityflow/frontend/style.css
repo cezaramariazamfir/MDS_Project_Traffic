@@ -1,0 +1,101 @@
+/* 1) html și body să fie 100% înălțime și fără margine */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* 2) containerul principal (fluid) să umple tot ecranul */
+.container-fluid {
+  height: 100%;
+  width: 100%;
+  padding: 0 !important;  /* deja ai p-0 dar să forțăm */
+}
+
+/* 3) rândul și coloanele la fel */
+.row {
+  height: 100%;
+  margin: 0;
+}
+.row.no-gutters {
+  --bs-gutter-x: 0;
+  margin: 0;
+}
+
+/* 4) coloana canvas: flex 1 și poziționare relativă */
+.col-10.d-flex {
+  flex: 1 1 auto;
+  position: relative;
+}
+
+/* 5) elementul care conține PIXI */
+#simulator-canvas {
+  width: 100%;
+  height: 100%;
+  display: block; /* elimină whitespace*/
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.noselect {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+#simulator-canvas {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.status-panel {
+    z-index: 3;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+#info {
+    max-height: 100%;
+}
+
+#chart {
+    height: 100%;
+}
+
+#chart .ct-line {
+    stroke-width: 1px;
+    stroke-opacity: 0.8;
+}
+
+#chart .ct-label {
+    font-weight: bold;
+}
+
+#chart-container {
+    background-color: rgba(216, 220, 225, 0.8);
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    box-sizing: border-box;
+}
+
+#chart-title {
+    font-weight: bold;
+    font-size: large;
+    color: #6c757d;
+    width: 100%;
+    text-align: center;
+}

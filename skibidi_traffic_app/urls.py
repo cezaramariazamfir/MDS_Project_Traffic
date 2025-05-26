@@ -11,6 +11,9 @@ urlpatterns = [
     path('changepassword', views.change_password_view, name='changepassword'),
     path('game', views.game, name='game'),
     path('create', views.create, name='create'),
+    path('cityflow/', views.cityflow_view, name='cityflow'),
+    path('run-simulation/', views.run_simulation, name='run_simulation'),
+    path('write_roadnet_js/', views.write_roadnet_js, name='write_roadnet_js'),
 ]
 
 from django.conf import settings

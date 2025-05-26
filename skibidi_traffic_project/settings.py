@@ -60,6 +60,7 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR, 'skibidi_traffic_app', 'templates'),
                  BASE_DIR / 'skibidi_traffic_app' / 'frontend' / 'build',
+                 BASE_DIR / 'cityflow' / 'frontend',
                  ],
         'APP_DIRS': True,
         'OPTIONS': {
