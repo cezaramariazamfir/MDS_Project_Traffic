@@ -4,6 +4,7 @@ import Strada      from "./Strada.js";
 import Masina from "./masina.js";
 import { exportToJSON } from "./data_flow.js";
 import { initTrafic, deseneazaMasini, simuleazaTrafic } from './trafic.js';
+import { startTrafficSimulation, stopTrafficSimulation, isTrafficSimulationActive } from './trafficsimulator.js';
 
 console.log("Loaded JS!!!!");
 const PIXELI_PE_METRU = 11.43;
@@ -1041,6 +1042,15 @@ if (idIntersectie) {
 }
 
 document.getElementById("simuleazaTrafic").addEventListener("click", async () => {
+  // Verifică dacă simularea este deja activă
+  if (isTrafficSimulationActive()) {
+    // Oprește simularea
+    stopTrafficSimulation();
+    document.getElementById("simuleazaTrafic").textContent = "🚦 Simulează trafic";
+    alert("Simularea a fost oprită!");
+    return;
+  }
+
   const idDinUrl = new URLSearchParams(window.location.search).get("id");
   const nume = idDinUrl ? null : "intersectie_noua";
 
@@ -1068,12 +1078,12 @@ document.getElementById("simuleazaTrafic").addEventListener("click", async () =>
         "X-CSRFToken": getCSRFToken()
       },
       body: JSON.stringify({ id: idDinUrl, nume, data })
-    });
-
-    const json = await res.json();
+    });    const json = await res.json();
     if (res.ok) {
       console.log("Intersecția este pregătită pentru simulare:", json.id);
       startSimulare(json.id);
+      // Schimbă textul butonului pentru a indica că simularea poate fi oprită
+      document.getElementById("simuleazaTrafic").textContent = "🛑 Oprește simularea";
     } else {
       alert("Eroare: " + (json.error || "necunoscută"));
     }
@@ -1090,11 +1100,20 @@ window.intersectii = intersectii;
 initTrafic(drawScene);
 
 function startSimulare(id) {
-    // Adaugă mașini pe traseele existente
-    simuleazaTrafic(intersectii, 5);
-    alert("Simularea a început!");
+    // Folosește noul sistem de simulare trafic avânsat
+    const success = startTrafficSimulation(intersectii, drawScene);
+    if (success) {
+        alert("Simularea avansată a început! Folosește panoul de control pentru a configura fluxul de trafic.");
+    }
 }
 
+// Funcție pentru a actualiza starea butonului când simularea se oprește
+function onSimulationStopped() {
+    document.getElementById("simuleazaTrafic").textContent = "🚦 Simulează trafic";
+}
+
+// Expune funcția global pentru a fi accesibilă din trafficsimulator.js
+window.onSimulationStopped = onSimulationStopped;
 
 
 document.getElementById("btnDefineRoute").addEventListener("click", () => {
