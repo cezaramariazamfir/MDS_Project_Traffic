@@ -20,7 +20,7 @@ export default class Strada {
       out: false
     };
 
-    this.trasee = []; // posibile direcții de parcurs prin intersecție
+    // this.trasee = []; // posibile direcții de parcurs prin intersecție
   }
 
   getPunctConectare() {

@@ -724,11 +724,49 @@ canvas.addEventListener('click', function (e) {
           const dy = clickPos.y - py;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
+          var final = false;
+
           if (dist < 7) {
             console.log("end detectat");
             console.log("punctStartInfo.intersectie", punctStartInfo.intersectie);
             console.log("trasee", punctStartInfo.intersectie.trasee);
             puncteTraseu.push(new Punct(px, py));
+            drawScene();
+            final = true;
+
+            //----------------------------------------------------------------
+            const stradaIn = punctStartInfo.intersectie.listaStrazi[punctStartInfo.stradaIndex];
+            const stradaOut = strada;
+
+            // 👉 PRE-START
+            {
+              const dirIn = stradaIn.getVectorDirectie();
+              const perpIn = { x: -dirIn.y, y: dirIn.x };
+              const startIn = stradaIn.getPunctConectare();
+              const offsetIn = -stradaIn.latimeBanda * (punctStartInfo.bandaIndex + 0.5) - stradaIn.spatiuVerde / 2;
+              const pxIn = startIn.x + perpIn.x * offsetIn;
+              const pyIn = startIn.y + perpIn.y * offsetIn;
+
+              const lungimeIn = stradaIn.lungime || 50; // sau o valoare default
+              const punctPreStart = new Punct(pxIn + dirIn.x * lungimeIn, pyIn + dirIn.y * lungimeIn);
+              puncteTraseu.unshift(punctPreStart);
+            }
+
+            // 👉 POST-END
+            {
+              const dirOut = stradaOut.getVectorDirectie();
+              const perpOut = { x: -dirOut.y, y: dirOut.x };
+              const startOut = stradaOut.getPunctConectare();
+              const offsetOut = stradaOut.latimeBanda * (b + 0.5) + stradaOut.spatiuVerde / 2;
+              const pxOut = startOut.x + perpOut.x * offsetOut;
+              const pyOut = startOut.y + perpOut.y * offsetOut;
+
+              const lungimeOut = stradaOut.lungime || 50; // default fallback
+              const punctPostEnd = new Punct(pxOut + dirOut.x * lungimeOut, pyOut + dirOut.y * lungimeOut);
+              puncteTraseu.push(punctPostEnd);
+            }
+
+            //-------------------------------------------------------------------
 
             if (!punctStartInfo.intersectie.trasee) {
               punctStartInfo.intersectie.trasee = [];
@@ -740,6 +778,8 @@ canvas.addEventListener('click', function (e) {
             });
 
             alert("Traseu salvat.");
+            console.log("Traseu salvat:", punctStartInfo.intersectie.trasee);
+            return;
             // puncteTraseu = [];
             // punctStartInfo = null;
             // modDefinireTraseu = false;
@@ -754,10 +794,12 @@ canvas.addEventListener('click', function (e) {
     // 3️⃣ Dacă nu s-a dat click pe un punct END, atunci e punct intermediar
     console.log("punctStartInfo.intersectie", punctStartInfo.intersectie);
     console.log("trasee", punctStartInfo.intersectie.trasee);
-    puncteTraseu.push(new Punct(clickPos.x, clickPos.y));
-    console.log(puncteTraseu);
-    drawScene();
-    return;
+    if (final == false){
+        puncteTraseu.push(new Punct(clickPos.x, clickPos.y));
+        console.log(puncteTraseu);
+        drawScene();
+        return;
+    }
   }
 }
 
