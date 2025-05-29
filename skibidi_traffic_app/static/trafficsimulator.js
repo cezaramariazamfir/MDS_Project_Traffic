@@ -186,10 +186,146 @@ export class TrafficSimulator {
             z-index: 1000;
             overflow-y: auto;
             font-family: Arial, sans-serif;
-        `;
-
-        document.body.appendChild(this.uiPanel);
+        `;        document.body.appendChild(this.uiPanel);
         this.attachTrafficControlEventListeners();
+        
+        // Desenează preview-urile pentru toate rutele după ce sunt adăugate în DOM
+        setTimeout(() => {
+            this.routes.forEach(route => {
+                this.drawRoutePreview(route);
+            });
+        }, 100);
+    }    /**
+     * Desenează un preview al traseului pe canvas
+     */
+    drawRoutePreview(route) {
+        const canvas = document.getElementById(`preview-canvas-${route.id}`);
+        if (!canvas || !route.points || route.points.length < 2) return;
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Setează dimensiunile canvas-ului
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        
+        // Găsește limitele traseului pentru scalare
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        
+        for (const point of route.points) {
+            minX = Math.min(minX, point.x);
+            minY = Math.min(minY, point.y);
+            maxX = Math.max(maxX, point.x);
+            maxY = Math.max(maxY, point.y);
+        }
+        
+        // Adaugă un mic padding
+        const padding = 20;
+        minX -= padding;
+        minY -= padding;
+        maxX += padding;
+        maxY += padding;
+        
+        // Calculează factorul de scalare pentru a încadra traseul în canvas
+        const scaleX = canvas.width / (maxX - minX);
+        const scaleY = canvas.height / (maxY - minY);
+        const scale = Math.min(scaleX, scaleY);
+        
+        // Translatează pentru a centra traseul
+        const offsetX = (canvas.width - (maxX - minX) * scale) / 2;
+        const offsetY = (canvas.height - (maxY - minY) * scale) / 2;
+        
+        // Desenează traseul
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Desenează linia traseului
+        ctx.beginPath();
+        for (let i = 0; i < route.points.length; i++) {
+            const x = (route.points[i].x - minX) * scale + offsetX;
+            const y = (route.points[i].y - minY) * scale + offsetY;
+            
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+        ctx.strokeStyle = "#3498db";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Desenează punctele de start și final
+        if (route.points.length > 0) {
+            // Punct de start (verde)
+            const startX = (route.points[0].x - minX) * scale + offsetX;
+            const startY = (route.points[0].y - minY) * scale + offsetY;
+            ctx.beginPath();
+            ctx.arc(startX, startY, 6, 0, 2 * Math.PI);
+            ctx.fillStyle = "#2ecc71";
+            ctx.fill();
+            ctx.strokeStyle = "#27ae60";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Punct de final (roșu)
+            const endX = (route.points[route.points.length - 1].x - minX) * scale + offsetX;
+            const endY = (route.points[route.points.length - 1].y - minY) * scale + offsetY;
+            ctx.beginPath();
+            ctx.arc(endX, endY, 6, 0, 2 * Math.PI);
+            ctx.fillStyle = "#e74c3c";
+            ctx.fill();
+            ctx.strokeStyle = "#c0392b";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Desenează mașină pentru a indica direcția
+            if (route.points.length > 1) {
+                const idx = Math.floor(route.points.length / 2);
+                const p1 = route.points[Math.max(0, idx - 1)];
+                const p2 = route.points[idx];
+                
+                const x1 = (p1.x - minX) * scale + offsetX;
+                const y1 = (p1.y - minY) * scale + offsetY;
+                const x2 = (p2.x - minX) * scale + offsetX;
+                const y2 = (p2.y - minY) * scale + offsetY;
+                
+                const dx = x2 - x1;
+                const dy = y2 - y1;
+                const angle = Math.atan2(dy, dx);
+                
+                // Poziția mașinii la mijlocul segmentului
+                const carX = (x1 + x2) / 2;
+                const carY = (y1 + y2) / 2;
+                
+                // Desenează mașina
+                ctx.save();
+                ctx.translate(carX, carY);
+                ctx.rotate(angle);
+                
+                // Caroserie
+                ctx.beginPath();
+                ctx.rect(-10, -4, 20, 8);
+                ctx.fillStyle = "#3498db";
+                ctx.fill();
+                ctx.strokeStyle = "#2980b9";
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                // Parbriz
+                ctx.beginPath();
+                ctx.rect(-7, -3, 5, 6);
+                ctx.fillStyle = "#34495e";
+                ctx.fill();
+                
+                // Faruri
+                ctx.beginPath();
+                ctx.arc(10, -2, 1, 0, 2 * Math.PI);
+                ctx.arc(10, 2, 1, 0, 2 * Math.PI);
+                ctx.fillStyle = "#f1c40f";
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
     }
 
     /**
@@ -206,21 +342,26 @@ export class TrafficSimulator {
         if (this.routes.length === 0) {
             html += `<div style="text-align: center; color: #888;">Nu există rute definite</div>`;
         } else {
-            this.routes.forEach(route => {
-                html += `
+            this.routes.forEach(route => {                html += `
                     <div style="margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
                         <div style="font-weight: bold; color: #333; margin-bottom: 8px;">${route.name}</div>
                         <div style="font-size: 12px; color: #666; margin-bottom: 10px;">${route.description}</div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
+                        
+                        <!-- Preview Canvas pentru traseu -->
+                        <div style="margin: 10px 0;">
+                            <canvas id="preview-canvas-${route.id}" 
+                                    style="width: 100%; height: 120px; border: 1px solid #ddd; background-color: #f5f5f5; border-radius: 4px;">
+                            </canvas>
+                        </div>
+                          <div style="display: flex; align-items: center; gap: 10px;">
                             <label style="font-size: 14px; min-width: 120px;">Mașini/minut:</label>
                             <input type="range" 
                                    id="flow_${route.id}" 
                                    min="0" 
                                    max="60" 
                                    value="10" 
-                                   style="flex: 1;"
-                                   oninput="this.nextElementSibling.textContent = this.value">
-                            <span style="min-width: 30px; text-align: center; font-weight: bold;">10</span>
+                                   style="flex: 1;">
+                            <span id="flow-value-${route.id}" style="min-width: 30px; text-align: center; font-weight: bold;">10</span>
                         </div>
                         <div style="margin-top: 8px;">
                             <button class="startRouteBtn" data-route-id="${route.id}" 
@@ -261,45 +402,83 @@ export class TrafficSimulator {
 
     /**
      * Atașează event listener-ii pentru interfața de control
-     */
-    attachTrafficControlEventListeners() {
-        // Slider-ele pentru flux
-        this.routes.forEach(route => {
-            const slider = document.getElementById(`flow_${route.id}`);
-            if (slider) {
-                slider.addEventListener('input', (e) => {
-                    this.routeFlows.set(route.id, parseInt(e.target.value));
+     */    attachTrafficControlEventListeners() {
+        // Delay pentru a se asigura că DOM-ul este complet încărcat
+        setTimeout(() => {
+            // Slider-ele pentru flux
+            this.routes.forEach(route => {
+                const slider = document.getElementById(`flow_${route.id}`);
+                const valueSpan = document.getElementById(`flow-value-${route.id}`);
+                
+                if (slider && valueSpan) {
+                    // Actualizează atât valoarea din Map cât și textul afișat
+                    slider.addEventListener('input', (e) => {
+                        const value = parseInt(e.target.value);
+                        this.routeFlows.set(route.id, value);
+                        valueSpan.textContent = value;
+                        
+                        // Dacă ruta rulează deja, restart-ează cu noua valoare
+                        if (this.carGenerationIntervals.has(route.id)) {
+                            this.startRouteGeneration(route.id);
+                        }
+                    });
+                    
+                    // Setează valoarea inițială în Map
+                    this.routeFlows.set(route.id, parseInt(slider.value));
+                } else {
+                    console.warn(`Nu s-au găsit elementele pentru ruta ${route.id}`);
+                }
+            });
+
+            // Butoanele pentru start/stop individual
+            document.querySelectorAll('.startRouteBtn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const routeId = e.target.getAttribute('data-route-id');
+                    this.startRouteGeneration(routeId);
+                });
+            });
+
+            document.querySelectorAll('.stopRouteBtn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const routeId = e.target.getAttribute('data-route-id');
+                    this.stopRouteGeneration(routeId);
+                });
+            });
+
+            // Butoanele pentru control global
+            const startAllBtn = document.getElementById('startAllRoutes');
+            const stopAllBtn = document.getElementById('stopAllRoutes');
+            const closeBtn = document.getElementById('closeTrafficControl');
+            
+            if (startAllBtn) {
+                startAllBtn.addEventListener('click', () => {
+                    this.startAllRoutes();
                 });
             }
-        });
+            
+            if (stopAllBtn) {
+                stopAllBtn.addEventListener('click', () => {
+                    this.stopAllRoutes();
+                });
+            }
+            
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    this.stopSimulation();
+                });
+            }
 
-        // Butoanele pentru start/stop individual
-        document.querySelectorAll('.startRouteBtn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const routeId = e.target.getAttribute('data-route-id');
-                this.startRouteGeneration(routeId);
+            // Redimensionează canvas-urile când se schimbă dimensiunea ferestrei
+            window.addEventListener('resize', () => {
+                if (this.isSimulationActive) {
+                    setTimeout(() => {
+                        this.routes.forEach(route => {
+                            this.drawRoutePreview(route);
+                        });
+                    }, 100);
+                }
             });
-        });
-
-        document.querySelectorAll('.stopRouteBtn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const routeId = e.target.getAttribute('data-route-id');
-                this.stopRouteGeneration(routeId);
-            });
-        });
-
-        // Butoanele pentru control global
-        document.getElementById('startAllRoutes').addEventListener('click', () => {
-            this.startAllRoutes();
-        });
-
-        document.getElementById('stopAllRoutes').addEventListener('click', () => {
-            this.stopAllRoutes();
-        });
-
-        document.getElementById('closeTrafficControl').addEventListener('click', () => {
-            this.stopSimulation();
-        });
+        }, 150); // Delay mai mare pentru siguranță
     }
 
     /**
