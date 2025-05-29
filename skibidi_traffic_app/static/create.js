@@ -1,7 +1,9 @@
 import Punct       from "./Punct.js";
 import Intersectie from "./Intersectie.js";
 import Strada      from "./Strada.js";
+import Masina from "./masina.js";
 import { exportToJSON } from "./data_flow.js";
+import { initTrafic, deseneazaMasini, simuleazaTrafic } from './trafic.js';
 
 console.log("Loaded JS!!!!");
 const PIXELI_PE_METRU = 11.43;
@@ -52,6 +54,8 @@ let stradaNouaIndexLatura = null;
 let modDefinireTraseu = false;
 let puncteTraseu = [];
 let punctStartInfo = null;
+
+let masini = []; // Lista de mașini active
 
 function distantaPunctLaSegment(px, py, x1, y1, x2, y2) {
   const A = px - x1;
@@ -134,7 +138,10 @@ function drawScene() {
       let pct = new Punct(p.x, p.y);
       pct.deseneaza(ctx);
     }
-
+    
+    // Desenează toate mașinile active
+    deseneazaMasini(ctx);
+    
     //daca intersectia e in curs de desenare
     if (modDesenareIntersectie && listaVarfuriTemp.length > 0) {
       ctx.beginPath();
@@ -1076,8 +1083,16 @@ document.getElementById("simuleazaTrafic").addEventListener("click", async () =>
   }
 });
 
+// Expune intersectii global pentru modulul de trafic
+window.intersectii = intersectii;
+
+// Inițializează modulul de trafic cu funcția drawScene
+initTrafic(drawScene);
+
 function startSimulare(id) {
-  alert("Simularea a început!");
+    // Adaugă mașini pe traseele existente
+    simuleazaTrafic(intersectii, 5);
+    alert("Simularea a început!");
 }
 
 
