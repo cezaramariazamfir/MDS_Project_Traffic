@@ -24,29 +24,35 @@ export class TrafficSimulator {
         this.extractRoutes();
         setDrawSceneCallback(drawSceneCallback);
         initAnimatieMasini();
-    }
-
-    /**
+    }    /**
      * Extrage toate rutele din intersecții
      */
     extractRoutes() {
         this.routes = [];
+        console.log("🔍 Extragere rute din", this.intersections.length, "intersecții...");
+        
         for (let i = 0; i < this.intersections.length; i++) {
             const inter = this.intersections[i];
+            console.log(`   Intersecția ${i}: ${inter.trasee ? inter.trasee.length : 0} trasee`);
+            
             if (inter.trasee && inter.trasee.length > 0) {
                 for (let j = 0; j < inter.trasee.length; j++) {
                     const traseu = inter.trasee[j];
+                    console.log(`     Traseu ${j}: ${traseu.puncte ? traseu.puncte.length : 0} puncte`);
+                    
                     this.routes.push({
                         id: `route_${i}_${j}`,
                         intersectionIndex: i,
                         routeIndex: j,
                         points: traseu.puncte,
                         name: `Ruta ${i + 1}.${j + 1}`,
-                        description: this.generateRouteDescription(traseu.puncte)
+                        description: this.generateRouteDescription(traseu.puncte),
+                        hasExtendedPoints: traseu.hasExtendedPoints || false
                     });
                 }
             }
         }
+        console.log("✅ Total rute extrase:", this.routes.length);
     }
 
     /**
@@ -70,12 +76,24 @@ export class TrafficSimulator {
         }
         
         return `Spre ${direction} (${points.length} puncte)`;
-    }
-
-    /**
+    }    /**
      * Activează simularea și afișează interfața de control
      */
     startSimulation() {
+        // 🔄 SINCRONIZEAZĂ cu intersecțiile actuale din window.intersectii
+        if (window.intersectii) {
+            this.intersections = window.intersectii;
+            console.log("✅ Simulatorul sincronizat cu intersecțiile actuale:", this.intersections.length);
+        }
+        
+        // Re-extrage rutele pentru a include cele noi adăugate
+        this.extractRoutes();
+        
+        console.log("📋 Rute extrase pentru simulare:", this.routes.length);
+        this.routes.forEach(route => {
+            console.log(`   - ${route.name}: ${route.description}`);
+        });
+        
         if (this.routes.length === 0) {
             alert("Nu există rute definite pentru simulare!");
             return false;
@@ -91,7 +109,7 @@ export class TrafficSimulator {
         });
 
         return true;
-    }    /**
+    }/**
      * Oprește simularea și restabilește interfața normală
      */
     stopSimulation() {
@@ -155,16 +173,18 @@ export class TrafficSimulator {
                 element.style.display = 'block';
             }
         });
-    }
-
-    /**
+    }    /**
      * Afișează interfața de control al traficului
      */
     showTrafficControlUI() {
+        // 🔄 Șterge panoul existent pentru a forța regenerarea cu rutele actuale
         if (this.uiPanel) {
-            this.uiPanel.style.display = 'block';
-            return;
+            console.log("🗑️ Ștergere panou UI existent pentru regenerare...");
+            this.uiPanel.remove();
+            this.uiPanel = null;
         }
+
+        console.log("🎨 Creare panou UI nou cu", this.routes.length, "rute...");
 
         // Creează panoul UI
         this.uiPanel = document.createElement('div');
@@ -195,7 +215,7 @@ export class TrafficSimulator {
                 this.drawRoutePreview(route);
             });
         }, 100);
-    }    /**
+    }/**
      * Desenează un preview al traseului pe canvas
      */
     drawRoutePreview(route) {
