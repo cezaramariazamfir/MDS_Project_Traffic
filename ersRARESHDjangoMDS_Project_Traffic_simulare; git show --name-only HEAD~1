@@ -1,0 +1,10 @@
+[33mcommit d9179d254c74b5d604b8e652f02ca034f144e18f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mModSimulare[m[33m, [m[1;31morigin/ModSimulare[m[33m)[m
+Author: rarescozma25 <raress.cozma@gmail.com>
+Date:   Fri May 30 16:40:02 2025 +0300
+
+    Rezolvare directii masini
+
+skibidi_traffic_app/static/create.js
+skibidi_traffic_app/static/masina.js
+skibidi_traffic_app/static/rl_traffic_optimizer.js
+skibidi_traffic_app/static/trafficsimulator.js

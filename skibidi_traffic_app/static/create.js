@@ -111,42 +111,11 @@ function deseneazaTraseeSalvate() {
         for (let i = 1; i < traseu.puncte.length; i++) {
           ctx.lineTo(traseu.puncte[i].x, traseu.puncte[i].y);
         }
-        
-        // Diferențiază vizual traseele cu puncte extinse
-        if (traseu.hasExtendedPoints) {
-          ctx.strokeStyle = "darkblue";
-          ctx.lineWidth = 2;
-          ctx.setLineDash([8, 3]); // Linie mai groasă și punctată diferit
-        } else {
-          ctx.strokeStyle = "blue";
-          ctx.lineWidth = 1;
-          ctx.setLineDash([5, 5]); // Linie clasică
-        }
+        ctx.strokeStyle = "blue";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]); // Linie 5px, spațiu 5px
         ctx.stroke();
         ctx.setLineDash([]);
-        
-        // 🟢 Marchează punctul pre-start (verde)
-        if (traseu.hasExtendedPoints && traseu.puncte.length >= 2) {
-          ctx.beginPath();
-          ctx.arc(traseu.puncte[0].x, traseu.puncte[0].y, 4, 0, 2 * Math.PI);
-          ctx.fillStyle = "green";
-          ctx.fill();
-          ctx.strokeStyle = "darkgreen";
-          ctx.lineWidth = 2;
-          ctx.stroke();
-        }
-        
-        // 🔴 Marchează punctul post-end (roșu)
-        if (traseu.hasExtendedPoints && traseu.puncte.length >= 2) {
-          const lastPoint = traseu.puncte[traseu.puncte.length - 1];
-          ctx.beginPath();
-          ctx.arc(lastPoint.x, lastPoint.y, 4, 0, 2 * Math.PI);
-          ctx.fillStyle = "red";
-          ctx.fill();
-          ctx.strokeStyle = "darkred";
-          ctx.lineWidth = 2;
-          ctx.stroke();
-        }
       }
     }
   }
@@ -697,7 +666,9 @@ canvas.addEventListener('click', function (e) {
       }
       drawScene();
       
-    }    if (modDefinireTraseu) {
+    }
+
+    if (modDefinireTraseu) {
   const clickPos = getCanvasCoordinates(e);
 
   // 1️⃣ Selectăm punctul de START
@@ -720,19 +691,13 @@ canvas.addEventListener('click', function (e) {
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < 7) {
-            // 🚗 Calculează punctul pre-start (capătul străzii unde încep mașinile)
-            const preStartX = px - dir.x * strada.lungime;
-            const preStartY = py - dir.y * strada.lungime;
-            
             punctStartInfo = {
               intersectie: inter,
               stradaIndex: sIndex,
-              bandaIndex: b,
-              strada: strada
+              bandaIndex: b
             };
-            // Începe traseul cu punctul pre-start în loc de punctul din intersecție
-            puncteTraseu = [new Punct(preStartX, preStartY), new Punct(px, py)];
-            alert("START setat cu punct pre-start la capătul străzii. Acum adaugă puncte intermediare și apoi un punct de final.");
+            puncteTraseu = [new Punct(px, py)];
+            alert("START setat. Acum adaugă puncte intermediare și apoi un punct de final.");
             drawScene();
             return;
           }
@@ -740,6 +705,7 @@ canvas.addEventListener('click', function (e) {
       }
     }
   }
+
   // 2️⃣ Dacă avem START, verificăm dacă ai dat click pe un END
   if (punctStartInfo) {
     console.log("punct start info", punctStartInfo)
@@ -759,18 +725,49 @@ canvas.addEventListener('click', function (e) {
           const dy = clickPos.y - py;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
+          var final = false;
+
           if (dist < 7) {
             console.log("end detectat");
             console.log("punctStartInfo.intersectie", punctStartInfo.intersectie);
             console.log("trasee", punctStartInfo.intersectie.trasee);
-            
-            // 🚗 Calculează punctul post-end (capătul străzii unde ies mașinile)
-            const postEndX = px + dir.x * strada.lungime;
-            const postEndY = py + dir.y * strada.lungime;
-            
-            // Adaugă punctul din intersecție și punctul post-end la traseu
             puncteTraseu.push(new Punct(px, py));
-            puncteTraseu.push(new Punct(postEndX, postEndY));
+            drawScene();
+            final = true;
+
+            //----------------------------------------------------------------
+            const stradaIn = punctStartInfo.intersectie.listaStrazi[punctStartInfo.stradaIndex];
+            const stradaOut = strada;
+
+            // 👉 PRE-START
+            {
+              const dirIn = stradaIn.getVectorDirectie();
+              const perpIn = { x: -dirIn.y, y: dirIn.x };
+              const startIn = stradaIn.getPunctConectare();
+              const offsetIn = -stradaIn.latimeBanda * (punctStartInfo.bandaIndex + 0.5) - stradaIn.spatiuVerde / 2;
+              const pxIn = startIn.x + perpIn.x * offsetIn;
+              const pyIn = startIn.y + perpIn.y * offsetIn;
+
+              const lungimeIn = stradaIn.lungime || 50; // sau o valoare default
+              const punctPreStart = new Punct(pxIn + dirIn.x * lungimeIn, pyIn + dirIn.y * lungimeIn);
+              puncteTraseu.unshift(punctPreStart);
+            }
+
+            // 👉 POST-END
+            {
+              const dirOut = stradaOut.getVectorDirectie();
+              const perpOut = { x: -dirOut.y, y: dirOut.x };
+              const startOut = stradaOut.getPunctConectare();
+              const offsetOut = stradaOut.latimeBanda * (b + 0.5) + stradaOut.spatiuVerde / 2;
+              const pxOut = startOut.x + perpOut.x * offsetOut;
+              const pyOut = startOut.y + perpOut.y * offsetOut;
+
+              const lungimeOut = stradaOut.lungime || 50; // default fallback
+              const punctPostEnd = new Punct(pxOut + dirOut.x * lungimeOut, pyOut + dirOut.y * lungimeOut);
+              puncteTraseu.push(punctPostEnd);
+            }
+
+            //-------------------------------------------------------------------
 
             if (!punctStartInfo.intersectie.trasee) {
               punctStartInfo.intersectie.trasee = [];
@@ -778,11 +775,12 @@ canvas.addEventListener('click', function (e) {
             punctStartInfo.intersectie.trasee.push({
               stradaIndex: punctStartInfo.stradaIndex,
               bandaIndex: punctStartInfo.bandaIndex,
-              puncte: puncteTraseu,
-              hasExtendedPoints: true // Flag pentru a marca că are puncte extinse
+              puncte: puncteTraseu
             });
 
-            alert("Traseu salvat cu puncte pre-start și post-end pentru flux complet de trafic.");
+            alert("Traseu salvat.");
+            console.log("Traseu salvat:", punctStartInfo.intersectie.trasee);
+            return;
             // puncteTraseu = [];
             // punctStartInfo = null;
             // modDefinireTraseu = false;
@@ -797,10 +795,12 @@ canvas.addEventListener('click', function (e) {
     // 3️⃣ Dacă nu s-a dat click pe un punct END, atunci e punct intermediar
     console.log("punctStartInfo.intersectie", punctStartInfo.intersectie);
     console.log("trasee", punctStartInfo.intersectie.trasee);
-    puncteTraseu.push(new Punct(clickPos.x, clickPos.y));
-    console.log(puncteTraseu);
-    drawScene();
-    return;
+    if (final == false){
+        puncteTraseu.push(new Punct(clickPos.x, clickPos.y));
+        console.log(puncteTraseu);
+        drawScene();
+        return;
+    }
   }
 }
 
@@ -835,6 +835,7 @@ canvas.addEventListener('click', function (e) {
     }
 
 });
+
 
 const adaugaStradaBtn = document.getElementById("adaugaStradaBtn");
 adaugaStradaBtn.addEventListener("click", () => {
@@ -1093,18 +1094,45 @@ document.getElementById("simuleazaTrafic").addEventListener("click", async () =>
     return;
   }
 
-  // Începe simularea direct fără a salva în baza de date
+  const idDinUrl = new URLSearchParams(window.location.search).get("id");
+  const nume = idDinUrl ? null : "intersectie_noua";
+
+  const data = {
+    intersectii: intersectii.map((inter, idx) => ({
+      id: idx,
+      varfuri: inter.listaVarfuri.map(p => ({ x: p.x, y: p.y })),
+      strazi: inter.listaStrazi.map(str => ({
+        indexLatura: str.indexLatura,
+        pozitiePeLatura: str.pozitiePeLatura,
+        benziIn: str.benziIn,
+        benziOut: str.benziOut,
+        lungime: str.lungime,
+        trecerePietoni: str.trecerePietoni,
+        semafoare: str.semafoare
+      }))
+    }))
+  };
+
   try {
-    const success = startTrafficSimulation(intersectii, drawScene);
-    if (success) {
+    const res = await fetch("/Skibidi_traffic/simuleaza/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCSRFToken()
+      },
+      body: JSON.stringify({ id: idDinUrl, nume, data })
+    });    const json = await res.json();
+    if (res.ok) {
+      console.log("Intersecția este pregătită pentru simulare:", json.id);
+      startSimulare(json.id);
+      // Schimbă textul butonului pentru a indica că simularea poate fi oprită
       document.getElementById("simuleazaTrafic").textContent = "🛑 Oprește simularea";
-      alert("Simularea avansată a început! Folosește panoul de control pentru a configura fluxul de trafic.");
     } else {
-      alert("Nu se poate începe simularea. Verifică dacă există rute definite.");
+      alert("Eroare: " + (json.error || "necunoscută"));
     }
   } catch (err) {
-    console.error("Eroare la începerea simulării:", err);
-    alert("Eroare la începerea simulării: " + err.message);
+    console.error("Eroare:", err);
+    alert("Eroare de rețea");
   }
 });
 

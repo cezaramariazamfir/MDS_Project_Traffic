@@ -80,19 +80,13 @@ export class TrafficSimulator {
      * Activează simularea și afișează interfața de control
      */
     startSimulation() {
-        // 🔄 SINCRONIZEAZĂ cu intersecțiile actuale din window.intersectii
+        // Sincronizează cu intersecțiile actuale din window.intersectii
         if (window.intersectii) {
             this.intersections = window.intersectii;
-            console.log("✅ Simulatorul sincronizat cu intersecțiile actuale:", this.intersections.length);
         }
         
         // Re-extrage rutele pentru a include cele noi adăugate
         this.extractRoutes();
-        
-        console.log("📋 Rute extrase pentru simulare:", this.routes.length);
-        this.routes.forEach(route => {
-            console.log(`   - ${route.name}: ${route.description}`);
-        });
         
         if (this.routes.length === 0) {
             alert("Nu există rute definite pentru simulare!");
