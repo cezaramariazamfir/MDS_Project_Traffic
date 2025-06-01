@@ -5,7 +5,7 @@ import Masina from "./masina.js";
 import { exportToJSON } from "./data_flow.js";
 import { initTrafic, deseneazaMasini, simuleazaTrafic } from './trafic.js';
 import { startTrafficSimulation, stopTrafficSimulation, isTrafficSimulationActive } from './trafficsimulator.js';
-
+let contorMasiniTrecute = 0;
 console.log("Loaded JS!!!!");
 const PIXELI_PE_METRU = 11.43;
 const METRI_PE_PIXEL = 1 / PIXELI_PE_METRU;

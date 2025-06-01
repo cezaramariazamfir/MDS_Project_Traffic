@@ -1,11 +1,11 @@
-import { initAnimatieMasini, adaugaMasina, getMasini, setDrawSceneCallback, genereareMasiniPeTraseeleSalvate, clearMasini } from './masina.js';
+
+import { initAnimatieMasini, adaugaMasina, getMasini ,setDrawSceneCallback, genereareMasiniPeTraseeleSalvate, clearMasini, resetContorMasini } from './masina.js';
 
 /**
  * TrafficSimulator - Clasa pentru controlul avânsat al traficului
  * Permite setarea fluxului de trafic pentru fiecare rută în parte
  */
-export class TrafficSimulator {
-    constructor() {
+export class TrafficSimulator {    constructor() {
         this.isSimulationActive = false;
         this.routeFlows = new Map(); // Map cu fluxul pentru fiecare rută
         this.carGenerationIntervals = new Map(); // Intervalele pentru generarea mașinilor
@@ -13,8 +13,10 @@ export class TrafficSimulator {
         this.uiPanel = null; // Panoul UI pentru controlul traficului
         this.intersections = [];
         this.drawSceneCallback = null;
+        
+        // Resetează contorul de mașini trecute la crearea unei noi instanțe
+        resetContorMasini();
     }
-
     /**
      * Inițializează simulatorul cu intersecțiile și callback-ul de desenare
      */
