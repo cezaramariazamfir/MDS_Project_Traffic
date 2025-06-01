@@ -1,5 +1,4 @@
-
-import { initAnimatieMasini, adaugaMasina, getMasini ,setDrawSceneCallback, genereareMasiniPeTraseeleSalvate, clearMasini, resetContorMasini } from './masina.js';
+import { initAnimatieMasini, adaugaMasina, getMasini ,setDrawSceneCallback, genereareMasiniPeTraseeleSalvate, clearMasini, resetContorMasini, setTrafficSimulatorRef } from './masina.js';
 
 /**
  * TrafficSimulator - Clasa pentru controlul avânsat al traficului
@@ -13,11 +12,11 @@ export class TrafficSimulator {    constructor() {
         this.uiPanel = null; // Panoul UI pentru controlul traficului
         this.intersections = [];
         this.drawSceneCallback = null;
+        this.routeCarCounters = new Map(); // Contor pentru mașinile care au trecut prin fiecare rută
         
         // Resetează contorul de mașini trecute la crearea unei noi instanțe
         resetContorMasini();
-    }
-    /**
+    }    /**
      * Inițializează simulatorul cu intersecțiile și callback-ul de desenare
      */
     initialize(intersections, drawSceneCallback) {
@@ -25,8 +24,9 @@ export class TrafficSimulator {    constructor() {
         this.drawSceneCallback = drawSceneCallback;
         this.extractRoutes();
         setDrawSceneCallback(drawSceneCallback);
+        setTrafficSimulatorRef(this); // Set reference for route counters
         initAnimatieMasini();
-    }    /**
+    }/**
      * Extrage toate rutele din intersecții
      */
     extractRoutes() {
@@ -67,11 +67,11 @@ export class TrafficSimulator {    constructor() {
                 for (let j = 0; j < trasee.length; j++) {
                     const traseu = trasee[j];
                     console.log(`     Traseu ${j}: ${traseu.puncte ? traseu.puncte.length : 0} puncte`);
-                    
-                    // Verifică că traseul are puncte valide
+                      // Verifică că traseul are puncte valide
                     if (traseu.puncte && Array.isArray(traseu.puncte) && traseu.puncte.length > 0) {
+                        const routeId = `route_${i}_${j}`;
                         this.routes.push({
-                            id: `route_${i}_${j}`,
+                            id: routeId,
                             intersectionIndex: i,
                             routeIndex: j,
                             points: traseu.puncte,
@@ -79,8 +79,11 @@ export class TrafficSimulator {    constructor() {
                             description: this.generateRouteDescription(traseu.puncte),
                             hasExtendedPoints: traseu.hasExtendedPoints || false
                         });
+                        
+                        // Inițializează contorul pentru această rută
+                        this.routeCarCounters.set(routeId, 0);
                     } else {
-                        console.warn(`     ⚠️ Traseu ${j} nu are puncte valide:`, traseu);
+                        console.warn(`⚠️ Traseu ${j} nu are puncte valide:`, traseu);
                     }
                 }
             }
@@ -119,9 +122,11 @@ export class TrafficSimulator {    constructor() {
         return `Spre ${direction} (${points.length} puncte)`;
     }    /**
      * Activează simularea și afișează interfața de control
-W     */    startSimulation() {
-        // Re-extrage rutele pentru a include cele noi adăugate
+     */
+    startSimulation() {
+        // Sincronizează cu intersecțiile actuale din window.intersectii
         this.extractRoutes();
+        
         
         if (this.routes.length === 0) {
             alert("Nu există rute definite pentru simulare!");
@@ -424,8 +429,7 @@ W     */    startSimulation() {
                         </div>
                     </div>
                 `;
-            });
-        }
+            });        }
 
         html += `
             <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #eee;">
@@ -509,9 +513,7 @@ W     */    startSimulation() {
                 stopAllBtn.addEventListener('click', () => {
                     this.stopAllRoutes();
                 });
-            }
-            
-            if (closeBtn) {
+            }            if (closeBtn) {
                 closeBtn.addEventListener('click', () => {
                     this.stopSimulation();
                 });
@@ -543,12 +545,10 @@ W     */    startSimulation() {
         if (!route || flow === 0) return;
 
         // Calculează intervalul în milisecunde (60000ms = 1 minut)
-        const interval = 60000 / flow;
-
-        const intervalId = setInterval(() => {
+        const interval = 60000 / flow;        const intervalId = setInterval(() => {
             if (this.isSimulationActive) {
                 const vitezaAleatoare = 1 + Math.random() * 3;
-                adaugaMasina(route.points, vitezaAleatoare);
+                adaugaMasina(route.points, vitezaAleatoare, routeId);
             }
         }, interval);
 
@@ -612,9 +612,7 @@ W     */    startSimulation() {
      */
     isActive() {
         return this.isSimulationActive;
-    }
-
-    /**
+    }    /**
      * Obține informații despre rutele curente
      */
     getRoutesInfo() {
@@ -625,6 +623,129 @@ W     */    startSimulation() {
             flow: this.routeFlows.get(route.id) || 0,
             isGenerating: this.carGenerationIntervals.has(route.id)
         }));
+    }    /**
+     * Incrementează contorul pentru o rută specifică
+     */
+    incrementRouteCounter(routeId) {
+        if (this.routeCarCounters.has(routeId)) {
+            const currentCount = this.routeCarCounters.get(routeId);
+            this.routeCarCounters.set(routeId, currentCount + 1);
+            console.log(`🚗 Route ${routeId}: ${currentCount + 1} cars completed`);
+            
+            // Log periodic statistics every 10 cars
+            if ((currentCount + 1) % 10 === 0) {
+                this.printTrafficStats();
+            }
+        }
+    }    /**
+     * Resetează toate contoarele de rute
+     */
+    resetRouteCounters() {
+        for (const routeId of this.routeCarCounters.keys()) {
+            this.routeCarCounters.set(routeId, 0);
+        }
+        console.log("🔄 Route counters reset - all counters set to 0");
+        this.printTrafficStats();
+    }
+
+    /**
+     * Obține array cu numărul de mașini pentru fiecare rută
+     * Returnează format [2,1,3] unde indexul corespunde cu ordinea rutelor
+     */
+    getRouteCountersArray() {
+        return this.routes.map(route => this.routeCarCounters.get(route.id) || 0);
+    }
+
+    /**
+     * Obține informații detaliate despre contoarele rutelor
+     */
+    getRouteCountersInfo() {
+        return this.routes.map(route => ({
+            routeId: route.id,
+            name: route.name,
+            count: this.routeCarCounters.get(route.id) || 0
+        }));
+    }
+
+    /**
+     * Afișează statistici despre trafic pe console
+     */
+    printTrafficStats() {
+        console.log("=== TRAFFIC STATISTICS ===");
+        const countersArray = this.getRouteCountersArray();
+        console.log("Route counters array:", countersArray);
+        
+        this.routes.forEach((route, index) => {
+            const count = this.routeCarCounters.get(route.id) || 0;
+            console.log(`${route.name}: ${count} cars`);
+        });
+        
+        const totalCars = countersArray.reduce((sum, count) => sum + count, 0);
+        console.log(`Total cars: ${totalCars}`);
+    }
+    
+    /**
+     * Actualizează afișarea contorilor în UI
+     */
+    updateCounterDisplay() {
+        if (!this.uiPanel) return;
+        
+        let totalCars = 0;
+        
+        this.routes.forEach(route => {
+            const count = this.routeCarCounters.get(route.id) || 0;
+            totalCars += count;
+            
+            const countElement = document.getElementById(`count-${route.id}`);
+            if (countElement) {
+                countElement.textContent = `${count} mașini`;
+                
+                // Add visual feedback for recent updates
+                countElement.style.color = count > 0 ? '#28a745' : '#6c757d';
+                if (count > 0) {
+                    countElement.style.fontWeight = 'bold';
+                }
+            }
+        });
+        
+        const totalElement = document.getElementById('totalCarsCount');
+        if (totalElement) {
+            totalElement.textContent = `${totalCars} mașini`;
+            totalElement.style.color = totalCars > 0 ? '#28a745' : '#6c757d';
+        }
+    }
+
+    /**
+     * Exportă statisticile traficului
+     */
+    exportTrafficStats() {
+        const stats = {
+            timestamp: new Date().toISOString(),
+            routes: this.getRouteCountersInfo(),
+            countersArray: this.getRouteCountersArray(),
+            totalCars: this.getRouteCountersArray().reduce((sum, count) => sum + count, 0)
+        };
+        
+        const dataStr = JSON.stringify(stats, null, 2);
+        const dataBlob = new Blob([dataStr], {type: 'application/json'});
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `traffic_stats_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        console.log("📊 Traffic statistics exported:", stats);
+    }
+
+    /**
+     * Inițializează afișarea contorilor după crearea UI-ului
+     */
+    initializeCounterDisplay() {
+        // Initialize the counter display with current values
+        this.updateCounterDisplay();
     }
 }
 
@@ -644,3 +765,26 @@ export function stopTrafficSimulation() {
 export function isTrafficSimulationActive() {
     return trafficSimulator.isActive();
 }
+
+// Global functions for accessing route counter data
+export function getRouteCountersArray() {
+    return trafficSimulator.getRouteCountersArray();
+}
+
+export function getRouteCountersInfo() {
+    return trafficSimulator.getRouteCountersInfo();
+}
+
+export function resetRouteCounters() {
+    trafficSimulator.resetRouteCounters();
+}
+
+export function printTrafficStats() {
+    trafficSimulator.printTrafficStats();
+}
+
+// Make functions available globally for debugging
+window.getRouteCountersArray = getRouteCountersArray;
+window.getRouteCountersInfo = getRouteCountersInfo;
+window.resetRouteCounters = resetRouteCounters;
+window.printTrafficStats = printTrafficStats;

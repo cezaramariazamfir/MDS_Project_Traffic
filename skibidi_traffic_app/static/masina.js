@@ -1,6 +1,13 @@
 let contorMasiniTrecute = 0;
 
-export default class Masina {    constructor(traseu, viteza = 5) {
+// Referință globală către traffic simulator pentru accesul la route counters
+let trafficSimulatorRef = null;
+
+export function setTrafficSimulatorRef(ref) {
+    trafficSimulatorRef = ref;
+}
+
+export default class Masina {    constructor(traseu, viteza = 5, routeId = null) {
         this.traseu = traseu; // Lista de puncte de urmat
         this.viteza = viteza; // Pixeli per frame
         this.indexPunctCurent = 0; // Indexul punctului curent din traseu
@@ -10,6 +17,7 @@ export default class Masina {    constructor(traseu, viteza = 5) {
         this.culoare = this.getCuloareAleatoare(); // Culoare aleatoare pentru mașină
         this.setDimensiuni(); // Setează dimensiunile în funcție de tip
         this.unghi = 0; // Unghiul de rotație în radiani
+        this.routeId = routeId; // ID-ul rutei pentru tracking per-rută
         
         
     }
@@ -62,6 +70,12 @@ export default class Masina {    constructor(traseu, viteza = 5) {
             if(!this.terminat){
                 contorMasiniTrecute++;
                 console.log(`Numar de masini ajunse la destinatie: ${contorMasiniTrecute}`);
+                
+                // Incrementează contorul pentru ruta specifică dacă este disponibil
+                if (this.routeId && trafficSimulatorRef && trafficSimulatorRef.incrementRouteCounter) {
+                    trafficSimulatorRef.incrementRouteCounter(this.routeId);
+                }
+                
                 this.terminat = true; // Mașina a ajuns la destinație
             }
             
@@ -756,8 +770,8 @@ export function initAnimatieMasini() {
     animatieRuleaza = false;
 }
 
-export function adaugaMasina(traseu, viteza = 2) {
-    const masinaNoua = new Masina(traseu, viteza);
+export function adaugaMasina(traseu, viteza = 2, routeId = null) {
+    const masinaNoua = new Masina(traseu, viteza, routeId);
     masini.push(masinaNoua);
     
     // Pornește animația dacă nu rulează deja
