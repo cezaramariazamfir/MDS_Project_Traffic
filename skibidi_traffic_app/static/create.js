@@ -4,6 +4,12 @@ import Strada      from "./Strada.js";
 import Masina from "./masina.js";
 import { exportToJSON } from "./data_flow.js";
 import { initTrafic, deseneazaMasini, simuleazaTrafic } from './trafic.js';
+import SemaforBanda from "./Semafor.js";
+import { calculeazaMatriceCompatibilitate, segmenteSeIntersecteaza} from './logicaSemafoare.js';
+import GrupaSemafor from "./GrupaSemafor.js"; // asigură-te că ai importat
+import { determinaFazeSemafor } from "./logicaSemafoare.js";
+
+let grupeSemafor = [];
 
 console.log("Loaded JS!!!!");
 const PIXELI_PE_METRU = 11.43;
@@ -29,6 +35,7 @@ let isDragging = false;
 let dragStartX = 0;
 let dragStartY = 0;
 let backgroundImage = null;
+let accesareColturiIntersectie = 1;
 
 const imageLoader = document.getElementById('imageLoader'); //element cu care incarc imagine
 const loadImageBtn = document.getElementById('loadImage'); //butonul care face image loader sa apara in pagina
@@ -231,27 +238,6 @@ function drawScene() {
           ctx.stroke();
         }
 
-        // 🔴 END-uri (posibile destinații)
-        // for (let inter of intersectii) {
-        //   for (let strada of inter.listaStrazi) {
-        //     const dir = strada.getVectorDirectie();
-        //     const perp = { x: -dir.y, y: dir.x };
-        //     const start = strada.getPunctConectare();
-
-        //     for (let b = 0; b < strada.benziIn; b++) {
-        //       const offset = -strada.latimeBanda * (b + 0.5) - strada.spatiuVerde / 2;
-        //       const px = start.x + perp.x * offset;
-        //       const py = start.y + perp.y * offset;
-
-        //       ctx.beginPath();
-        //       ctx.arc(px, py, 5, 0, 2 * Math.PI);
-        //       ctx.fillStyle = "red";
-        //       ctx.fill();
-        //       ctx.strokeStyle = "white";
-        //       ctx.stroke();
-        //     }
-        //   }
-        // }
         // 🔵 Posibile puncte de final: toate benzile de OUT
         for (let inter of intersectii) {
           for (let sIndex = 0; sIndex < inter.listaStrazi.length; sIndex++) {
@@ -276,6 +262,76 @@ function drawScene() {
         }
 
       }
+
+
+setTimeout(() => {
+  const intersectie = intersectii[0];
+
+  const compatibilitate = calculeazaMatriceCompatibilitate(intersectie);
+  const fazeTrasee = determinaFazeSemafor(compatibilitate);
+
+  const vector_semafoare = [];
+
+  // 🔍 1. Construiește semafoarele o singură dată, pentru toate benzile IN din toate traseele
+  const trasee = intersectie.trasee || [];
+  for (let traseu of trasee) {
+    const dejaExista = vector_semafoare.some(
+      s => s.stradaIndex === traseu.stradaIndex && s.bandaIndex === traseu.bandaIndex
+    );
+
+    if (!dejaExista) {
+      vector_semafoare.push(new SemaforBanda(intersectie, traseu.stradaIndex, traseu.bandaIndex));
+    }
+  }
+
+  const grupeSemafor = [];
+
+  let estePrimaFaza = true;
+  for (let faza of fazeTrasee) {
+    const semafoareSet = new Set();
+
+    for (let idxTraseu of faza) {
+      const traseu = intersectie.trasee[idxTraseu];
+
+      const semafor = vector_semafoare.find(
+        s => s.stradaIndex === traseu.stradaIndex && s.bandaIndex === traseu.bandaIndex
+      );
+
+      if (semafor) {
+        // Folosim un ID unic pentru fiecare semafor ca cheie în Set
+        const cheieUnica = `${semafor.stradaIndex}_${semafor.bandaIndex}`;
+        semafoareSet.add(cheieUnica);
+      }
+    }
+
+    // Refacem vectorul de obiecte efective din cheile unice
+    const semafoareFaza = [...semafoareSet].map(cheie => {
+      const [stradaIndex, bandaIndex] = cheie.split("_").map(Number);
+      return vector_semafoare.find(s => s.stradaIndex === stradaIndex && s.bandaIndex === bandaIndex);
+    });
+
+    let culoare = estePrimaFaza ? "green" : "red";
+    const grupa = new GrupaSemafor(culoare, 10, semafoareFaza);
+    grupa.changeColor(culoare);
+    grupeSemafor.push(grupa);
+    estePrimaFaza = false;
+  }
+
+  console.log("✅ Grupe de semafoare generate:", grupeSemafor);
+
+  // 💡 Desenăm semafoarele
+  for (let grupa of grupeSemafor) {
+    for (let sem of grupa.semafoare) {
+
+      sem.deseneaza(ctx);
+    }
+  }
+
+  // Opțional, salvează global
+  window.grupeSemafor = grupeSemafor;
+
+}, 5000);
+
 
 }
 
@@ -353,7 +409,9 @@ canvas.addEventListener('mousemove', function(e) {
 
     const lungimeLaturaInput = document.getElementById("lungimeLaturaInput");
     if (lungimeLaturaInput){
-      lungimeLaturaInput.value = lungime;
+      //lungimeLaturaInput.value = lungime;
+      lungimeLaturaInput.value = (lungime * METRI_PE_PIXEL).toFixed(2); // afișare în metri
+
     }
 
     let unghiOX = Math.atan2(-dy, dx) * (180 / Math.PI);
@@ -620,26 +678,27 @@ canvas.addEventListener('click', function (e) {
         return;
       }
 
-      // Altfel: detectăm intersectia și punctul apropiat
-      let found = false;
-      intersectieSelectata = null;
-      punctSelectatIndex = -1;
+      if(accesareColturiIntersectie == 1){// Altfel: detectăm intersectia și punctul apropiat
+        let found = false;
+        intersectieSelectata = null;
+        punctSelectatIndex = -1;
 
-      for (let inter of intersectii) {
-        inter.selected = false;
-        if (inter.continePunct(x, y)) {
-          inter.selected = true;
-          intersectieSelectata = inter;
+        for (let inter of intersectii) {
+          inter.selected = false;
+          if (inter.continePunct(x, y)) {
+            inter.selected = true;
+            intersectieSelectata = inter;
 
-          // Caută colț apropiat
-          for (let i = 0; i < inter.listaVarfuri.length; i++) {
-            const dx = inter.listaVarfuri[i].x - x;
-            const dy = inter.listaVarfuri[i].y - y;
-            if (Math.sqrt(dx * dx + dy * dy) < 30) {
-              punctSelectatIndex = i;
-              modMutarePunct = true; // doar acum intrăm în mod mutare
-              found = true;
-              break;
+            // Caută colț apropiat
+            for (let i = 0; i < inter.listaVarfuri.length; i++) {
+              const dx = inter.listaVarfuri[i].x - x;
+              const dy = inter.listaVarfuri[i].y - y;
+              if (Math.sqrt(dx * dx + dy * dy) < 30) {
+                punctSelectatIndex = i;
+                modMutarePunct = true; // doar acum intrăm în mod mutare
+                found = true;
+                break;
+              }
             }
           }
         }
@@ -953,17 +1012,12 @@ function getCSRFToken() {
   return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 }
 
-async function salveazaIntersectie() {
+export async function salveazaIntersectie() {
   if (!intersectii || intersectii.length === 0) {
     alert("Nu ai desenat nicio intersecție.");
     return;
   }
 
-  // const nume = prompt("Dă un nume intersecției:");
-  // if (!nume || nume.trim() === "") {
-  //   alert("Numele este necesar.");
-  //   return;
-  // }
 //   ⚠️ Dacă intersecția e deja salvată, NU mai cerem numele
   let nume = null;
   if (!idIntersectie) {
@@ -1029,14 +1083,7 @@ async function salveazaIntersectie() {
   }
 }
 
-
-
-
-
-
-
-
-async function incarcaIntersectie(id) {
+export async function incarcaIntersectie(id) {
   const res = await fetch(`/Skibidi_traffic/incarca/${id}/`);
   const data = await res.json();
   console.log("Date intersecție:", data);
@@ -1081,49 +1128,54 @@ const idIntersectie = params.get("id");
 if (idIntersectie) {
   incarcaIntersectie(idIntersectie);
 }
-
 document.getElementById("simuleazaTrafic").addEventListener("click", async () => {
   const idDinUrl = new URLSearchParams(window.location.search).get("id");
-  const nume = idDinUrl ? null : "intersectie_noua";
+
+  if (!idDinUrl) {
+    alert("Intersecția nu este salvată. Te rugăm să o salvezi mai întâi.");
+    return;
+  }
+
+  const inter = intersectii[0]; // presupunem 1 intersecție
 
   const data = {
-    intersectii: intersectii.map((inter, idx) => ({
-      id: idx,
-      varfuri: inter.listaVarfuri.map(p => ({ x: p.x, y: p.y })),
-      strazi: inter.listaStrazi.map(str => ({
-        indexLatura: str.indexLatura,
-        pozitiePeLatura: str.pozitiePeLatura,
-        benziIn: str.benziIn,
-        benziOut: str.benziOut,
-        lungime: str.lungime,
-        trecerePietoni: str.trecerePietoni,
-        semafoare: str.semafoare
-      }))
+    listaVarfuri: inter.listaVarfuri.map(p => ({ x: p.x, y: p.y })),
+    listaStrazi: inter.listaStrazi.map(s => ({
+      indexLatura: s.indexLatura,
+      pozitiePeLatura: s.pozitiePeLatura,
+      benziIn: s.benziIn,
+      benziOut: s.benziOut,
+      lungime: s.lungime,
+      trecerePietoni: s.trecerePietoni,
+      semafoare: s.semafoare
+    })),
+    trasee: inter.trasee.map(t => ({
+      stradaIndex: t.stradaIndex,
+      bandaIndex: t.bandaIndex,
+      puncte: t.puncte.map(p => ({ x: p.x, y: p.y }))
     }))
   };
 
   try {
-    const res = await fetch("/Skibidi_traffic/simuleaza/", {
+    const res = await fetch(`/Skibidi_traffic/simuleaza_intersectie/${idDinUrl}/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": getCSRFToken()
       },
-      body: JSON.stringify({ id: idDinUrl, nume, data })
+      body: JSON.stringify({ data })
     });
 
-    const json = await res.json();
-    if (res.ok) {
-      console.log("Intersecția este pregătită pentru simulare:", json.id);
-      startSimulare(json.id);
-    } else {
-      alert("Eroare: " + (json.error || "necunoscută"));
-    }
+    const html = await res.text();
+    document.open();
+    document.write(html);
+    document.close();
   } catch (err) {
     console.error("Eroare:", err);
     alert("Eroare de rețea");
   }
 });
+
 
 // Expune intersectii global pentru modulul de trafic
 window.intersectii = intersectii;
@@ -1145,14 +1197,20 @@ document.getElementById("btnDefineRoute").addEventListener("click", () => {
   punctStartInfo = null;
 
   if (modDefinireTraseu) {
+    accesareColturiIntersectie = 0;
     alert("Selectează un punct de START.");
     canvas.style.cursor = "pointer";
     document.getElementById("btnDefineRoute").textContent = "🛣️ Exit definire traseu";
   }
   else{
+    accesareColturiIntersectie = 1;
     canvas.style.cursor = "default";
     document.getElementById("btnDefineRoute").textContent = "🛣️ Definește traseu";
   }
 
   drawScene();
 });
+
+
+
+

@@ -9,30 +9,30 @@ export function initTrafic(drawSceneFunc) {
     initAnimatieMasini();
     
     // Adaugă butonul de generare mașini în sidebar
-    adaugaButonGenerareMasini();
+    //adaugaButonGenerareMasini();
 }
 
 // Adaugă buton pentru generarea mașinilor
-function adaugaButonGenerareMasini() {
-    document.addEventListener('DOMContentLoaded', function() {
-        const sidebar = document.getElementById('sidebar');
-        if (!sidebar) return;
+// function adaugaButonGenerareMasini() {
+//     document.addEventListener('DOMContentLoaded', function() {
+//         const sidebar = document.getElementById('sidebar');
+//         if (!sidebar) return;
         
-        // Verifică dacă butonul există deja
-        if (document.getElementById('btnGenerareMasini')) return;
+//         // Verifică dacă butonul există deja
+//         if (document.getElementById('btnGenerareMasini')) return;
         
-        const btnGenerareMasini = document.createElement("button");
-        btnGenerareMasini.id = "btnGenerareMasini";
-        btnGenerareMasini.textContent = "🚗 Generează mașini";
-        btnGenerareMasini.className = "btn btn-success mt-2";
-        btnGenerareMasini.addEventListener("click", () => {
-            const intersectii = window.intersectii || [];
-            genereareMasiniPeTraseeleSalvate(intersectii, 3);
-        });
+//         const btnGenerareMasini = document.createElement("button");
+//         btnGenerareMasini.id = "btnGenerareMasini";
+//         btnGenerareMasini.textContent = "🚗 Generează mașini";
+//         btnGenerareMasini.className = "btn btn-success mt-2";
+//         btnGenerareMasini.addEventListener("click", () => {
+//             const intersectii = window.intersectii || [];
+//             genereareMasiniPeTraseeleSalvate(intersectii, 3);
+//         });
         
-        sidebar.appendChild(btnGenerareMasini);
-    });
-}
+//         sidebar.appendChild(btnGenerareMasini);
+//     });
+// }
 
 // Funcție pentru a desena toate mașinile active
 export function deseneazaMasini(ctx) {
