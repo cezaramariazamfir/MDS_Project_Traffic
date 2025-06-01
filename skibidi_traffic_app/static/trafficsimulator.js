@@ -35,26 +35,65 @@ export class TrafficSimulator {    constructor() {
         
         for (let i = 0; i < this.intersections.length; i++) {
             const inter = this.intersections[i];
-            console.log(`   Intersecția ${i}: ${inter.trasee ? inter.trasee.length : 0} trasee`);
             
-            if (inter.trasee && inter.trasee.length > 0) {
-                for (let j = 0; j < inter.trasee.length; j++) {
-                    const traseu = inter.trasee[j];
+            // Verifică dacă intersecția are trasee definite
+            let trasee = [];
+            
+            // Cazul 1: Intersecție creată dinamic (trasee direct pe obiect)
+            if (inter.trasee && Array.isArray(inter.trasee)) {
+                trasee = inter.trasee;
+                console.log(`   Intersecția ${i} (dinamic): ${trasee.length} trasee`);
+            }
+            // Cazul 2: Intersecție încărcată din BD (verifică structura JSON)
+            else if (inter.data && inter.data.intersectii && inter.data.intersectii[0] && inter.data.intersectii[0].trasee) {
+                trasee = inter.data.intersectii[0].trasee;
+                console.log(`   Intersecția ${i} (din BD): ${trasee.length} trasee`);
+            }
+            // Cazul 3: Verifică dacă intersecția este ea însăși partea din data.intersectii
+            else if (inter.trasee && Array.isArray(inter.trasee)) {
+                trasee = inter.trasee;
+                console.log(`   Intersecția ${i} (structură BD directă): ${trasee.length} trasee`);
+            }
+            else {
+                console.log(`   Intersecția ${i}: Nu s-au găsit trasee`);
+                console.log("   Structura intersecției:", Object.keys(inter));
+                if (inter.data) {
+                    console.log("   Structura inter.data:", Object.keys(inter.data));
+                }
+            }
+            
+            // Procesează traseele găsite
+            if (trasee && trasee.length > 0) {
+                for (let j = 0; j < trasee.length; j++) {
+                    const traseu = trasee[j];
                     console.log(`     Traseu ${j}: ${traseu.puncte ? traseu.puncte.length : 0} puncte`);
                     
-                    this.routes.push({
-                        id: `route_${i}_${j}`,
-                        intersectionIndex: i,
-                        routeIndex: j,
-                        points: traseu.puncte,
-                        name: `Ruta ${i + 1}.${j + 1}`,
-                        description: this.generateRouteDescription(traseu.puncte),
-                        hasExtendedPoints: traseu.hasExtendedPoints || false
-                    });
+                    // Verifică că traseul are puncte valide
+                    if (traseu.puncte && Array.isArray(traseu.puncte) && traseu.puncte.length > 0) {
+                        this.routes.push({
+                            id: `route_${i}_${j}`,
+                            intersectionIndex: i,
+                            routeIndex: j,
+                            points: traseu.puncte,
+                            name: `Ruta ${i + 1}.${j + 1}`,
+                            description: this.generateRouteDescription(traseu.puncte),
+                            hasExtendedPoints: traseu.hasExtendedPoints || false
+                        });
+                    } else {
+                        console.warn(`     ⚠️ Traseu ${j} nu are puncte valide:`, traseu);
+                    }
                 }
             }
         }
         console.log("✅ Total rute extrase:", this.routes.length);
+        
+        // Debug: afișează rutele extrase pentru verificare
+        if (this.routes.length === 0) {
+            console.warn("🚨 Nu s-au găsit rute! Verificați structura intersecțiilor:");
+            this.intersections.forEach((inter, idx) => {
+                console.log(`Intersecția ${idx}:`, inter);
+            });
+        }
     }
 
     /**
@@ -80,13 +119,7 @@ export class TrafficSimulator {    constructor() {
         return `Spre ${direction} (${points.length} puncte)`;
     }    /**
      * Activează simularea și afișează interfața de control
-     */
-    startSimulation() {
-        // Sincronizează cu intersecțiile actuale din window.intersectii
-        if (window.intersectii) {
-            this.intersections = window.intersectii;
-        }
-        
+W     */    startSimulation() {
         // Re-extrage rutele pentru a include cele noi adăugate
         this.extractRoutes();
         
