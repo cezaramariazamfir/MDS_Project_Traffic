@@ -1,0 +1,115 @@
+.about-container {
+    margin: 100px auto 50px;
+    max-width: 1000px;
+    padding: 0 20px;
+    color: #fff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 20px;
+}
+
+.about-intro,
+.about-team,
+.about-goal {
+    background-color: rgba(20, 20, 20, 0.95);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 40px;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+    background-image:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 4px 4px;
+}
+
+
+.about-fun-fact{
+    display: flex;
+    gap: 30px;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+}
+.about-intro h1 {
+    font-size: 36px;
+    margin-bottom: 20px;
+    color: #00d4ff;
+}
+
+.about-team h2,
+.about-goal h2,
+.about-fun-fact h2 {
+    font-size: 28px;
+    margin-bottom: 15px;
+    color: #00c6d6;
+}
+
+
+.about-container {
+    padding: 0 10px;
+}
+
+.about-intro h1 {
+    font-size: 28px;
+}
+
+.about-team h2,
+.about-goal h2,
+.about-fun-fact h2 {
+    font-size: 22px;
+}
+
+.about-container p {
+    font-size: 19px;
+}
+
+    .about-team-photos {
+    background-color: rgba(20, 20, 20, 0.95);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 40px;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+    background-image:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 4px 4px;
+    text-align: center;
+}
+
+.about-team-photos h2 {
+    font-size: 28px;
+    margin-bottom: 30px;
+    color: #00c6d6;
+}
+
+.team-grid {
+  display: flex;
+  gap: 30px; /* distanța dintre div-uri, opțional */
+}
+
+
+.team-member {
+    /* Dacă vrei să limitezi lățimea fiecărei poze */
+    max-width: 300px; 
+    text-align: center; /* pentru a centra numele sub poză */
+
+}
+
+.team-member img {
+    width: 200px;
+    height: 200px;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+    border-radius: 10px; /* optional: for rounded corners */
+    margin: 0 auto;
+}
+
+.team-member p {
+    color: #e0f7fa;
+    font-size: 22px;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+
+

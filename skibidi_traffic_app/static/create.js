@@ -64,6 +64,8 @@ let punctStartInfo = null;
 
 let masini = []; // Lista de mașini active
 
+
+
 function distantaPunctLaSegment(px, py, x1, y1, x2, y2) {
   const A = px - x1;
   const B = py - y1;
@@ -126,6 +128,91 @@ function deseneazaTraseeSalvate() {
     }
   }
 }
+
+
+const undoPunctBtn = document.getElementById("undoPunctBtn");
+
+undoPunctBtn.addEventListener("click", () => {
+  if (modDesenareIntersectie && listaVarfuriTemp.length > 0) {
+    listaVarfuriTemp.pop(); // Elimină ultimul punct adăugat
+    drawScene(); // Redesenăm canvasul
+  } else {
+    alert("Nu există puncte de șters.");
+  }
+});
+
+// 
+
+const deleteStradaBtn = document.getElementById("deleteStradaBtn");
+
+deleteStradaBtn.addEventListener("click", () => {
+  if (!intersectieSelectata) {
+    alert("Selectează o intersecție mai întâi.");
+    return;
+  }
+
+  const strada = intersectieSelectata.listaStrazi.find(s => s.selected);
+  if (!strada) {
+    alert("Selectează o stradă mai întâi.");
+    return;
+  }
+
+  const confirmare = confirm("Sigur vrei să ștergi această stradă și toate traseele asociate?");
+  if (!confirmare) return;
+
+  const stradaIndex = intersectieSelectata.listaStrazi.indexOf(strada);
+
+  const esteLegatDeStrada = (traseu) => {
+    if (traseu.stradaIndex === stradaIndex) return true;
+
+    const benzi = [];
+    const dir = strada.getVectorDirectie();
+    const perp = { x: -dir.y, y: dir.x };
+    const start = strada.getPunctConectare();
+
+    // Generează punctele centralelor benzilor (OUT)
+    for (let b = 0; b < strada.benziOut; b++) {
+      const offset = strada.latimeBanda * (b + 0.5) + strada.spatiuVerde / 2;
+      benzi.push({
+        x: start.x + perp.x * offset,
+        y: start.y + perp.y * offset
+      });
+    }
+
+    // Verificăm al doilea punct (index 1) și penultimul (index length - 2)
+    const puncte = traseu.puncte;
+    const verificat = [];
+
+    if (puncte.length >= 2) verificat.push(puncte[1]);
+    if (puncte.length >= 3) verificat.push(puncte[puncte.length - 2]);
+
+    for (let punct of verificat) {
+      for (let banda of benzi) {
+        const dx = punct.x - banda.x;
+        const dy = punct.y - banda.y;
+        if (Math.sqrt(dx * dx + dy * dy) < 7) return true;
+      }
+    }
+
+    return false;
+  };
+
+  // 🔥 Filtrăm traseele care NU au legătură cu strada
+  intersectieSelectata.trasee = intersectieSelectata.trasee.filter(traseu => {
+    return !esteLegatDeStrada(traseu);
+  });
+
+  // Ștergem strada
+  intersectieSelectata.listaStrazi = intersectieSelectata.listaStrazi.filter(s => s !== strada);
+  stradaSelectata = null;
+
+  drawScene();
+});
+
+
+
+
+
 
 
 //functie care deseneaza elementele din canvas
@@ -264,73 +351,71 @@ function drawScene() {
       }
 
 
-setTimeout(() => {
-  const intersectie = intersectii[0];
+// setTimeout(() => {
+//   const intersectie = intersectii[0];
 
-  const compatibilitate = calculeazaMatriceCompatibilitate(intersectie);
-  const fazeTrasee = determinaFazeSemafor(compatibilitate);
+//   const compatibilitate = calculeazaMatriceCompatibilitate(intersectie);
+//   const fazeTrasee = determinaFazeSemafor(compatibilitate);
 
-  const vector_semafoare = [];
+//   const vector_semafoare = [];
 
-  // 🔍 1. Construiește semafoarele o singură dată, pentru toate benzile IN din toate traseele
-  const trasee = intersectie.trasee || [];
-  for (let traseu of trasee) {
-    const dejaExista = vector_semafoare.some(
-      s => s.stradaIndex === traseu.stradaIndex && s.bandaIndex === traseu.bandaIndex
-    );
+//   // 🔍 1. Construiește semafoarele o singură dată, pentru toate benzile IN din toate traseele
+//   const trasee = intersectie.trasee || [];
+//   for (let traseu of trasee) {
+//     const dejaExista = vector_semafoare.some(
+//       s => s.stradaIndex === traseu.stradaIndex && s.bandaIndex === traseu.bandaIndex
+//     );
 
-    if (!dejaExista) {
-      vector_semafoare.push(new SemaforBanda(intersectie, traseu.stradaIndex, traseu.bandaIndex));
-    }
-  }
+//     if (!dejaExista) {
+//       vector_semafoare.push(new SemaforBanda(intersectie, traseu.stradaIndex, traseu.bandaIndex));
+//     }
+//   }
 
-  const grupeSemafor = [];
+//   let estePrimaFaza = true;
+//   for (let faza of fazeTrasee) {
+//     const semafoareSet = new Set();
 
-  let estePrimaFaza = true;
-  for (let faza of fazeTrasee) {
-    const semafoareSet = new Set();
+//     for (let idxTraseu of faza) {
+//       const traseu = intersectie.trasee[idxTraseu];
 
-    for (let idxTraseu of faza) {
-      const traseu = intersectie.trasee[idxTraseu];
+//       const semafor = vector_semafoare.find(
+//         s => s.stradaIndex === traseu.stradaIndex && s.bandaIndex === traseu.bandaIndex
+//       );
 
-      const semafor = vector_semafoare.find(
-        s => s.stradaIndex === traseu.stradaIndex && s.bandaIndex === traseu.bandaIndex
-      );
+//       if (semafor) {
+//         // Folosim un ID unic pentru fiecare semafor ca cheie în Set
+//         const cheieUnica = `${semafor.stradaIndex}_${semafor.bandaIndex}`;
+//         semafoareSet.add(cheieUnica);
+//       }
+//     }
 
-      if (semafor) {
-        // Folosim un ID unic pentru fiecare semafor ca cheie în Set
-        const cheieUnica = `${semafor.stradaIndex}_${semafor.bandaIndex}`;
-        semafoareSet.add(cheieUnica);
-      }
-    }
+//     // Refacem vectorul de obiecte efective din cheile unice
+//     const semafoareFaza = [...semafoareSet].map(cheie => {
+//       const [stradaIndex, bandaIndex] = cheie.split("_").map(Number);
+//       return vector_semafoare.find(s => s.stradaIndex === stradaIndex && s.bandaIndex === bandaIndex);
+//     });
 
-    // Refacem vectorul de obiecte efective din cheile unice
-    const semafoareFaza = [...semafoareSet].map(cheie => {
-      const [stradaIndex, bandaIndex] = cheie.split("_").map(Number);
-      return vector_semafoare.find(s => s.stradaIndex === stradaIndex && s.bandaIndex === bandaIndex);
-    });
+//     let culoare = estePrimaFaza ? "green" : "red";
+//     const grupa = new GrupaSemafor(culoare, 10, semafoareFaza);
+//     grupa.changeColor(culoare);
+//     grupeSemafor.push(grupa);
+//     estePrimaFaza = false;
+//   }
 
-    let culoare = estePrimaFaza ? "green" : "red";
-    const grupa = new GrupaSemafor(culoare, 10, semafoareFaza);
-    grupa.changeColor(culoare);
-    grupeSemafor.push(grupa);
-    estePrimaFaza = false;
-  }
+//   console.log("✅ Grupe de semafoare generate:", grupeSemafor);
 
-  console.log("✅ Grupe de semafoare generate:", grupeSemafor);
+//   // 💡 Desenăm semafoarele
+//   for (let grupa of grupeSemafor) {
+//     for (let sem of grupa.semafoare) {
 
-  // 💡 Desenăm semafoarele
-  for (let grupa of grupeSemafor) {
-    for (let sem of grupa.semafoare) {
+//       sem.deseneaza(ctx);
+//     }
+//   }
 
-      sem.deseneaza(ctx);
-    }
-  }
+//   // Opțional, salvează global
+//   window.grupeSemafor = grupeSemafor;
 
-  // Opțional, salvează global
-  window.grupeSemafor = grupeSemafor;
-
-}, 5000);
+// }, 5000);
 
 
 }
@@ -1029,6 +1114,7 @@ export async function salveazaIntersectie() {
   }
 
   // Construim JSON-ul compatibil cu modelul Django
+  console.log("semafoarele inainte de bd" , grupeSemafor);
   const data = {
     intersectii: intersectii.map((inter, idx) => ({
       id: idIntersectie ? parseInt(idIntersectie) : idx,
@@ -1040,10 +1126,14 @@ export async function salveazaIntersectie() {
         benziOut: str.benziOut,
         lungime: str.lungime,
         trecerePietoni: str.trecerePietoni,
-        semafoare: {
-          in: str.semafoare.in,
-          out: str.semafoare.out
-        }
+        semafoare: grupeSemafor.map(grupa => ({
+    culoare: grupa.culoare,
+    durata: grupa.durata,
+    semafoare: grupa.semafoare.map(s => ({
+      stradaIndex: s.stradaIndex,
+      bandaIndex: s.bandaIndex
+    }))
+  }))
       })),
       trasee: inter.trasee.map(t => ({
         stradaIndex: t.stradaIndex,
@@ -1070,8 +1160,10 @@ export async function salveazaIntersectie() {
     if (res.ok) {
       if (idIntersectie) {
         alert("Intersecția a fost actualizată cu succes!");
+        console.log("id din save:", idIntersectie, json.id);
       } else {
         alert("Intersecția a fost salvată cu succes!");
+        return json.id;
       }
       //console.log("ID intersecție salvată:", json.id);
     } else {
@@ -1129,11 +1221,12 @@ if (idIntersectie) {
   incarcaIntersectie(idIntersectie);
 }
 document.getElementById("simuleazaTrafic").addEventListener("click", async () => {
-  const idDinUrl = new URLSearchParams(window.location.search).get("id");
+  let idDinUrl = new URLSearchParams(window.location.search).get("id");
 
+  console.log("ID din URL inainte:", idDinUrl);
   if (!idDinUrl) {
-    alert("Intersecția nu este salvată. Te rugăm să o salvezi mai întâi.");
-    return;
+    idDinUrl = await salveazaIntersectie(); // salvează intersecția curentă
+    console.log("ID din URL după salvare:", idDinUrl);
   }
 
   const inter = intersectii[0]; // presupunem 1 intersecție
@@ -1147,7 +1240,14 @@ document.getElementById("simuleazaTrafic").addEventListener("click", async () =>
       benziOut: s.benziOut,
       lungime: s.lungime,
       trecerePietoni: s.trecerePietoni,
-      semafoare: s.semafoare
+      semafoare: grupeSemafor.map(grupa => ({
+    culoare: grupa.culoare,
+    durata: grupa.durata,
+    semafoare: grupa.semafoare.map(s => ({
+      stradaIndex: s.stradaIndex,
+      bandaIndex: s.bandaIndex
+    }))
+  }))
     })),
     trasee: inter.trasee.map(t => ({
       stradaIndex: t.stradaIndex,

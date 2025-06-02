@@ -8,6 +8,8 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.decorators import login_required
 import logging
 logger = logging.getLogger('django')
+from django.http import JsonResponse, HttpResponseBadRequest
+import json
 
 def home(request):
     #print(settings.BASE_DIR)
@@ -203,3 +205,31 @@ import json
 #         except Exception as e:
 #             return JsonResponse({"error": str(e)}, status=400)
 
+
+
+# def simuleaza_intersectie(request, id):
+#     if request.method == 'POST':
+#         try:
+#             data = json.loads(request.body)
+#             # Poți transmite datele către template dacă este nevoie
+#             return render(request, 'simuleaza.html', {'intersectie_id': id, 'data': data})
+#         except json.JSONDecodeError:
+#             return HttpResponseBadRequest('Invalid JSON')
+#     else:
+#         return HttpResponseBadRequest('Invalid method')
+
+from django.utils.safestring import mark_safe
+import json
+
+def simuleaza_intersectie(request, id):
+    if request.method == 'POST':
+        try:
+            payload = json.loads(request.body)
+            data = payload.get("data", {})
+
+            return render(request, 'simuleaza.html', {
+                'intersectie_id': id,
+                'data': mark_safe(json.dumps(data))
+            })
+        except json.JSONDecodeError:
+            return HttpResponseBadRequest('Invalid JSON')
