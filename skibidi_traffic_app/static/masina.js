@@ -106,23 +106,45 @@ export default class Masina {    constructor(traseu, viteza = 5, routeId = null)
     calculezaVitezaEfectiva() {
         const distantaMinimaSiguranta = this.lungime + 25; // Distanță de siguranță mărită pentru prevenirea suprapunerii
         const distantaDetectie = distantaMinimaSiguranta * 5; // Distanță de detectie mărită pentru reacție mai bună
-        
-        // Verifică semaforurile din față mai întâi
+          // Verifică semaforurile din față mai întâi
         const semaforAproape = this.detecteazaSemaforDinFata(100); // Detectează semafoare într-un rază mai mare
         if (semaforAproape) {
             const distantaLaSemafor = semaforAproape.distanta;
             
             if (semaforAproape.status === "red") {
-                // Oprește la semafor dacă este roșu - distanță de oprire mărită pentru siguranță
-                if (distantaLaSemafor <= 20) {
-                    return 0; // Oprește complet cu mai mult spațiu (20px față de 15px)
-                } else if (distantaLaSemafor <= 50) {
-                    // Încetinește treptat când se apropie de semafor
-                    return this.viteza * 0.15; // Încetinire mai agresivă
+                // Verifică mai întâi dacă există mașini oprite la semafor
+                const masiniOprite = this.detecteazaMasiniOpriteLaSemafor(semaforAproape);
+                
+                if (masiniOprite.length > 0) {
+                    // Dacă există mașini oprite, oprește-te în spatele ultimei mașini
+                    // Găsește mașina cea mai apropiată dintre cele oprite
+                    const masinaOpriteaApropiata = masiniOprite.reduce((apropiata, curenta) => {
+                        const d1 = this.calculeazaDistantaLaMasina(apropiata);
+                        const d2 = this.calculeazaDistantaLaMasina(curenta);
+                        return d2 < d1 ? curenta : apropiata;
+                    });
+                    
+                    const distantaLaMasinaOprita = this.calculeazaDistantaLaMasina(masinaOpriteaApropiata);
+                    const distantaMinima = this.lungime / 2 + masinaOpriteaApropiata.lungime / 2 + 10; // Spațiu suplimentar între mașini
+                    
+                    if (distantaLaMasinaOprita <= distantaMinima) {
+                        return 0; // Oprire completă pentru a evita coliziunea
+                    } else if (distantaLaMasinaOprita <= distantaMinima * 2) {
+                        // Foarte încet când te apropii de mașina din față
+                        return this.viteza * 0.05;
+                    }
                 } else {
-                    // Începe să încetinească din timp
-                    const factorIncetinire = Math.max(0.25, distantaLaSemafor / 100);
-                    return this.viteza * factorIncetinire;
+                    // Nu sunt mașini oprite, oprește-te la semafor
+                    if (distantaLaSemafor <= 20) {
+                        return 0; // Oprește complet cu mai mult spațiu (20px față de 15px)
+                    } else if (distantaLaSemafor <= 50) {
+                        // Încetinește treptat când se apropie de semafor
+                        return this.viteza * 0.15; // Încetinire mai agresivă
+                    } else {
+                        // Începe să încetinească din timp
+                        const factorIncetinire = Math.max(0.25, distantaLaSemafor / 100);
+                        return this.viteza * factorIncetinire;
+                    }
                 }
             } else if (semaforAproape.status === "yellow") {
                 // Comportament pentru galben - încetinește sau accelerează în funcție de distanță
@@ -919,6 +941,37 @@ export default class Masina {    constructor(traseu, viteza = 5, routeId = null)
         }
         
         return false;
+    }
+    
+    // Detectează mașinile oprite la un semafor
+    detecteazaMasiniOpriteLaSemafor(semaforInfo) {
+        // Verifică dacă există mașini oprite între această mașină și semafor
+        const masiniActive = getMasini();
+        const masiniOpriteLaSemafor = [];
+        
+        for (const masina of masiniActive) {
+            // Ignoră mașina curentă
+            if (masina === this) continue;
+            
+            // Verifică doar mașinile care sunt pe același traseu și în aceeași direcție
+            if (!this.suntPeAcelasiTraseu(masina)) continue;
+            
+            // Verifică dacă mașina este aproape de semafor
+            const distantaMasinaLaSemafor = masina.calculeazaDistantaLaSemafor(semaforInfo.semafor);
+            
+            // Verifică dacă mașina este între această mașină și semafor
+            if (distantaMasinaLaSemafor < semaforInfo.distanta && 
+                distantaMasinaLaSemafor < 60 && 
+                this.esteMasinaInFata(masina)) {
+                
+                // Verifică dacă mașina este oprită sau aproape oprită
+                if (masina.calculezaVitezaEfectiva() < 0.2) {
+                    masiniOpriteLaSemafor.push(masina);
+                }
+            }
+        }
+        
+        return masiniOpriteLaSemafor;
     }
 }
 
