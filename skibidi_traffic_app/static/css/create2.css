@@ -97,15 +97,15 @@ button:hover{
 
 #saveToJSON{
     grid-column: 1 / 3;  /* de la linia 2 la 4 (adică coloana 2 și 3) */
-    grid-row: 5; 
+    grid-row: 7; 
 }
 #loadImage{
     grid-column: 1/3;
-    grid-row:4;
+    grid-row:6;
 }
 #simuleazaTrafic{
     grid-column: 1/3;
-    grid-row:6;
+    grid-row:8;
 }
 
 footer{
@@ -290,4 +290,37 @@ height:auto;
 #btnDefineRoute:hover{
     border: none;
     color:white;
+}
+
+/* <button id="undoPunctBtn">↩️ Undo punct</button>
+                <button id="deleteStradaBtn">🗑️ Șterge stradă</button>
+                <button id="btnStergeTraseu">🗑️ Șterge traseu</button> */
+#butoaneStergere{
+    width: 100%;
+    height: 100px;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+    grid-column: 1/3;
+    grid-row:3/5;
+    align-items: center;
+    justify-content: space-evenly;
+}
+#undoPunctBtn, #deleteStradaBtn, #btnStergeTraseu{
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight:600;
+    border: none;
+    border-radius: 30px;
+    background-color: #29385e;
+    cursor: pointer;
+    margin:10px;
+}
+#undoPunctBtn:hover, #deleteStradaBtn:hover, #btnStergeTraseu:hover{
+    background-color: #0097B2;
+    box-shadow: 3px 3px 10px #0097B2;
 }

@@ -64,7 +64,7 @@ let punctStartInfo = null;
 
 let masini = []; // Lista de mașini active
 
-
+let modStergereTraseu = false;
 
 function distantaPunctLaSegment(px, py, x1, y1, x2, y2) {
   const A = px - x1;
@@ -211,9 +211,18 @@ deleteStradaBtn.addEventListener("click", () => {
 
 
 
-
-
-
+document.getElementById("btnStergeTraseu").addEventListener("click", () => {
+    modStergereTraseu = !modStergereTraseu;
+    if (modStergereTraseu) {
+      alert("Click pe un traseu în interiorul unei intersecții pentru a-l șterge.");
+      canvas.style.cursor = "pointer";
+      document.getElementById("btnStergeTraseu").textContent = "❌ EXIT DELETE";
+    } else {
+      canvas.style.cursor = "default";
+      document.getElementById("btnStergeTraseu").textContent = "🗑️ Șterge traseu";
+    }
+  
+});
 
 //functie care deseneaza elementele din canvas
 function drawScene() {
@@ -273,8 +282,11 @@ function drawScene() {
     }
 
     if (modDefinireTraseu) {
-  deseneazaTraseeSalvate();
-}
+      deseneazaTraseeSalvate();
+    }
+    if (modStergereTraseu) {
+      deseneazaTraseeSalvate();
+    }
 
       if (modDefinireTraseu && !punctStartInfo) {
         // 🔵 Desenează toate punctele de START (puncte verzi)
@@ -839,6 +851,11 @@ canvas.addEventListener('click', function (e) {
               const lungimeOut = stradaOut.lungime || 50; // default fallback
               const punctPostEnd = new Punct(pxOut + dirOut.x * lungimeOut, pyOut + dirOut.y * lungimeOut);
               puncteTraseu.push(punctPostEnd);
+              
+              
+              drawScene();
+              document.getElementById("btnDefineRoute").textContent = "🛣️ Definește traseu";
+              modDefinireTraseu = false; // ieșim din modul de definire traseu
             }
 
             //-------------------------------------------------------------------
@@ -907,6 +924,60 @@ canvas.addEventListener('click', function (e) {
 
       alert("Clickul nu a fost suficient de aproape de o latură.");
     }
+
+
+    //------------------------------STERGERE TRASEU-----------------------------------
+if (modStergereTraseu) {
+
+  const clickPos = getCanvasCoordinates(e);
+
+  // 3️⃣ Verificăm dacă click-ul e într-o intersecție
+  for (let inter of intersectii) {
+    if (inter.continePunct(clickPos.x, clickPos.y)) {
+      let trasee = inter.trasee;
+      for (let i = 0; i < trasee.length; i++) {
+        const puncte = trasee[i].puncte;
+
+        // 4️⃣ Verificare: click aproape de un punct
+        for (let p of puncte) {
+          const dx = clickPos.x - p.x;
+          const dy = clickPos.y - p.y;
+          if (Math.sqrt(dx * dx + dy * dy) < 7) {
+            inter.trasee.splice(i, 1);
+            
+            document.getElementById("btnStergeTraseu").textContent = "🗑️ Șterge traseu";
+            drawScene();
+            modStergereTraseu = false;
+            return;
+          }
+        }
+
+        // 5️⃣ Verificare: click aproape de un segment
+        for (let j = 0; j < puncte.length - 1; j++) {
+          const A = puncte[j];
+          const B = puncte[j + 1];
+          const dist = distantaPunctLaSegment(clickPos.x, clickPos.y, A.x, A.y, B.x, B.y);
+          if (dist < 7) {
+            inter.trasee.splice(i, 1);
+            
+            document.getElementById("btnStergeTraseu").textContent = "🗑️ Șterge traseu";
+
+            drawScene();
+            modStergereTraseu = false;
+
+            return;
+          }
+        }
+      }
+
+      alert("Niciun traseu nu a fost găsit în apropierea punctului selectat.");
+      return;
+    }
+  }
+
+  alert("Click-ul nu este într-o intersecție. Traseul nu poate fi șters.");
+}
+//--------------------------------------------------------------------------------
 
 });
 
@@ -1237,6 +1308,8 @@ document.getElementById("btnDefineRoute").addEventListener("click", () => {
     accesareColturiIntersectie = 1;
     canvas.style.cursor = "default";
     document.getElementById("btnDefineRoute").textContent = "🛣️ Definește traseu";
+    modStergereTraseu = false;
+    document.getElementById("btnStergeTraseu").textContent = "🗑️ Șterge traseu";
   }
 
   drawScene();
