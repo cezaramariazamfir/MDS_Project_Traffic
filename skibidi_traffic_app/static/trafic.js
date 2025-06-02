@@ -8,8 +8,7 @@ export function initTrafic(drawSceneFunc) {
     // Inițializează animația mașinilor
     initAnimatieMasini();
     
-    // Adaugă butonul de generare mașini în sidebar
-    adaugaButonGenerareMasini();
+    // Nota: Butonul de generare mașini a fost eliminat
 }
 
 

@@ -955,17 +955,12 @@ function getCSRFToken() {
   return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 }
 
-async function salveazaIntersectie() {
+export async function salveazaIntersectie() {
   if (!intersectii || intersectii.length === 0) {
     alert("Nu ai desenat nicio intersecție.");
     return;
   }
 
-  // const nume = prompt("Dă un nume intersecției:");
-  // if (!nume || nume.trim() === "") {
-  //   alert("Numele este necesar.");
-  //   return;
-  // }
 //   ⚠️ Dacă intersecția e deja salvată, NU mai cerem numele
   let nume = null;
   if (!idIntersectie) {
@@ -1030,12 +1025,6 @@ async function salveazaIntersectie() {
     alert("Eroare de rețea: " + err.message);
   }
 }
-
-
-
-
-
-
 
 
 async function incarcaIntersectie(id) {
