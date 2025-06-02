@@ -232,9 +232,7 @@ function drawScene() {
       let pct = new Punct(p.x, p.y);
       pct.deseneaza(ctx);
     }
-    
-    // Desenează toate mașinile active
-    deseneazaMasini(ctx);
+  
     
     //daca intersectia e in curs de desenare
     if (modDesenareIntersectie && listaVarfuriTemp.length > 0) {
@@ -349,73 +347,6 @@ function drawScene() {
         }
 
       }
-
-
-// setTimeout(() => {
-//   const intersectie = intersectii[0];
-
-//   const compatibilitate = calculeazaMatriceCompatibilitate(intersectie);
-//   const fazeTrasee = determinaFazeSemafor(compatibilitate);
-
-//   const vector_semafoare = [];
-
-//   // 🔍 1. Construiește semafoarele o singură dată, pentru toate benzile IN din toate traseele
-//   const trasee = intersectie.trasee || [];
-//   for (let traseu of trasee) {
-//     const dejaExista = vector_semafoare.some(
-//       s => s.stradaIndex === traseu.stradaIndex && s.bandaIndex === traseu.bandaIndex
-//     );
-
-//     if (!dejaExista) {
-//       vector_semafoare.push(new SemaforBanda(intersectie, traseu.stradaIndex, traseu.bandaIndex));
-//     }
-//   }
-
-//   let estePrimaFaza = true;
-//   for (let faza of fazeTrasee) {
-//     const semafoareSet = new Set();
-
-//     for (let idxTraseu of faza) {
-//       const traseu = intersectie.trasee[idxTraseu];
-
-//       const semafor = vector_semafoare.find(
-//         s => s.stradaIndex === traseu.stradaIndex && s.bandaIndex === traseu.bandaIndex
-//       );
-
-//       if (semafor) {
-//         // Folosim un ID unic pentru fiecare semafor ca cheie în Set
-//         const cheieUnica = `${semafor.stradaIndex}_${semafor.bandaIndex}`;
-//         semafoareSet.add(cheieUnica);
-//       }
-//     }
-
-//     // Refacem vectorul de obiecte efective din cheile unice
-//     const semafoareFaza = [...semafoareSet].map(cheie => {
-//       const [stradaIndex, bandaIndex] = cheie.split("_").map(Number);
-//       return vector_semafoare.find(s => s.stradaIndex === stradaIndex && s.bandaIndex === bandaIndex);
-//     });
-
-//     let culoare = estePrimaFaza ? "green" : "red";
-//     const grupa = new GrupaSemafor(culoare, 10, semafoareFaza);
-//     grupa.changeColor(culoare);
-//     grupeSemafor.push(grupa);
-//     estePrimaFaza = false;
-//   }
-
-//   console.log("✅ Grupe de semafoare generate:", grupeSemafor);
-
-//   // 💡 Desenăm semafoarele
-//   for (let grupa of grupeSemafor) {
-//     for (let sem of grupa.semafoare) {
-
-//       sem.deseneaza(ctx);
-//     }
-//   }
-
-//   // Opțional, salvează global
-//   window.grupeSemafor = grupeSemafor;
-
-// }, 5000);
 
 
 }
