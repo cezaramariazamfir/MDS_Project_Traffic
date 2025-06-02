@@ -1,4 +1,4 @@
-import { initAnimatieMasini, adaugaMasina, getMasini ,setDrawSceneCallback, genereareMasiniPeTraseeleSalvate, clearMasini, resetContorMasini, setTrafficSimulatorRef } from './masina.js';
+import { initAnimatieMasini, adaugaMasina, getMasini ,setDrawSceneCallback, genereareMasiniPeTraseeleSalvate, clearMasini, resetContorMasini, setTrafficSimulatorRef, canSpawnCarOnRoute } from './masina.js';
 
 /**
  * TrafficSimulator - Clasa pentru controlul avânsat al traficului
@@ -409,7 +409,7 @@ export class TrafficSimulator {    constructor() {
                             <input type="range" 
                                    id="flow_${route.id}" 
                                    min="0" 
-                                   max="60" 
+                                   max="40" 
                                    value="10" 
                                    style="flex: 1;">
                             <span id="flow-value-${route.id}" style="min-width: 30px; text-align: center; font-weight: bold; color: #fff;">10</span>
@@ -578,16 +578,28 @@ export class TrafficSimulator {    constructor() {
         if (!route || flow === 0) return;
 
         // Calculează intervalul în milisecunde (60000ms = 1 minut)
-        const interval = 60000 / flow;        const intervalId = setInterval(() => {
+        const interval = 60000 / flow;
+        const intervalId = setInterval(() => {
             console.log("⏰ Timer pentru generare mașini - isSimulationActive:", this.isSimulationActive);
             if (this.isSimulationActive) {
                 // Verifică dacă semaforul pentru această rută este verde înainte de a genera mașină
                 if (this.checkTrafficLightForRoute(route)) {
-                    const vitezaAleatoare = 1 + Math.random() * 3;
-                    console.log("🚗 Încerc să adaug mașină pe ruta:", routeId, "cu viteza:", vitezaAleatoare);
-                    adaugaMasina(route.points, vitezaAleatoare, routeId);
+                    // Dacă e verde, verifică și dacă există loc pe bandă
+                    if (canSpawnCarOnRoute(route.id, route.points)) {
+                        const vitezaAleatoare = 1 + Math.random() * 3;
+                        console.log("🚗 Adaug mașină pe ruta:", routeId, "cu viteza:", vitezaAleatoare);
+                        adaugaMasina(route.points, vitezaAleatoare, routeId);
+                    } else {
+                        console.log("🚫 Nu există loc pe bandă pentru ruta", routeId, "(coloană la start)");
+                    }
                 } else {
-                    console.log("🔴 Nu generez mașină pe ruta", routeId, "- semaforul este roșu");
+                    // Dacă e roșu, nu spawnezi mașină dacă banda e plină
+                    if (canSpawnCarOnRoute(route.id, route.points)) {
+                        console.log("🔴 Semafor roșu, dar banda nu e plină - nu spawnez mașină");
+                        // Nu adăugăm mașină, doar logăm
+                    } else {
+                        console.log("🔴🚫 Semafor roșu și banda plină - nu spawnez mașină pe ruta", routeId);
+                    }
                 }
             } else {
                 console.warn("⚠️ Simularea nu este activă - nu adaug mașină");
