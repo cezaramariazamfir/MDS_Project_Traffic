@@ -2,6 +2,10 @@ body{
     width: 100vw;
 }
 
+.behind_navbar{
+    height: 70px;
+}
+
 #canvas {
     flex-grow: 1;
     background: #fff;

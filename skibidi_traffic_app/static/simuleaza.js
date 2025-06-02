@@ -241,8 +241,43 @@ if (window.data) {
             }
         }
 
-        // Opțional, salvează global
-        window.grupeSemafor = grupeSemafor;
+        // Adaugă inputuri pentru durată faze
+        const fazeInputContainer = document.getElementById("faze-inputuri");
+        fazeInputContainer.innerHTML = ""; // curăță dacă e re-generat
+
+        grupeSemafor.forEach((grupa, index) => {
+            const wrapper = document.createElement("div");
+            wrapper.style.marginBottom = "10px";
+
+            const label = document.createElement("label");
+            label.textContent = `Faza ${index + 1}: `;
+            label.style.color = "#fff";
+            label.style.marginRight = "10px";
+
+            const input = document.createElement("input");
+            input.type = "number";
+            input.min = 1;
+            input.value = grupa.time || 10; // folosește durata existentă
+            input.style.padding = "5px";
+            input.style.borderRadius = "5px";
+            input.style.border = "1px solid #ccc";
+            input.style.width = "80px";
+
+            // Actualizează obiectul grupa când se modifică inputul
+            input.addEventListener("input", () => {
+                const valoare = parseInt(input.value, 10);
+                if (!isNaN(valoare) && valoare > 0) {
+                    grupa.time = valoare;
+                }
+            });
+
+            wrapper.appendChild(label);
+            wrapper.appendChild(input);
+            fazeInputContainer.appendChild(wrapper);
+        });
+
+
+        console.log("grupe semafoare", grupeSemafor);
 
     }, 1000);    // Inițializează TrafficSimulator
     console.log("🚀 Creez TrafficSimulator...");
