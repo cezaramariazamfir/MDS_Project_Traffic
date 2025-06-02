@@ -49,18 +49,104 @@ function deseneazaTraseeSalvate() {
 
 window.addEventListener("resize", resizeCanvas);
 
-function drawScene() {
+let currentGrupaIndex = 0;
+
+function startSemafoareCycle() {
+  if (grupeSemafor.length === 0) return;
+
+  // Setează toate semafoarele pe roșu
+  grupeSemafor.forEach(grupa => {
+    grupa.changeColor("red");
+  });
+
+  // Activează grupa curentă
+  const grupaCurenta = grupeSemafor[currentGrupaIndex];
+  grupaCurenta.changeColor("green");
+
+  // Re-desenează scena
+  drawScene();
+
+  // Așteaptă durata grupei curente, apoi trece la următoarea
+  const durata = grupaCurenta.time || 10; // secunde
+  setTimeout(() => {
+    currentGrupaIndex = (currentGrupaIndex + 1) % grupeSemafor.length;
+    startSemafoareCycle();
+  }, durata * 1000);
+}
+
+
+// function drawScene() {
+//   ctx.setTransform(1, 0, 0, 1, 0, 0);
+//   ctx.clearRect(0, 0, canvas.width, canvas.height);
+//   ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
+
+//   for (let inter of intersectii) {
+//     inter.deseneaza(ctx);
+//   }
+//   deseneazaTraseeSalvate();
+//   for (let grupa of grupeSemafor) {
+//     for (let sem of grupa.semafoare) {
+//     sem.deseneaza(ctx);
+//     }}
+
+//   deseneazaMasini(ctx);
+// }
+
+function drawScene(fazaIndex = null) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
 
+  // Desenează intersecțiile
   for (let inter of intersectii) {
     inter.deseneaza(ctx);
   }
-  deseneazaTraseeSalvate();
+
+  // Dacă s-a transmis un index de fază valid
+  if (fazaIndex !== null && grupeSemafor[fazaIndex]) {
+    const grupa = grupeSemafor[fazaIndex];
+
+    // Desenează doar traseele asociate semafoarelor din acea grupă
+    for (let semafor of grupa.semafoare) {
+      const trasee = intersectii[0].trasee.filter(t =>
+        t.stradaIndex === semafor.stradaIndex &&
+        t.bandaIndex === semafor.bandaIndex
+      );
+
+      for (let traseu of trasee) {
+        if (traseu.puncte.length > 1) {
+          ctx.beginPath();
+          ctx.moveTo(traseu.puncte[0].x, traseu.puncte[0].y);
+          for (let i = 1; i < traseu.puncte.length; i++) {
+            ctx.lineTo(traseu.puncte[i].x, traseu.puncte[i].y);
+          }
+          ctx.strokeStyle = "orange";
+          ctx.lineWidth = 3;
+          ctx.setLineDash([]);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Desenează doar semafoarele din acea grupă
+    for (let semafor of grupa.semafoare) {
+      semafor.deseneaza(ctx);
+    }
+
+  } else {
+    // Desenează toate traseele și semafoarele
+    deseneazaTraseeSalvate();
+
+    for (let grupa of grupeSemafor) {
+      for (let sem of grupa.semafoare) {
+        sem.deseneaza(ctx);
+      }
+    }
+  }
 
   deseneazaMasini(ctx);
 }
+
 
 /**
  * Restabilește sidebar-ul la starea originală
@@ -234,13 +320,6 @@ if (window.data) {
 
         console.log("✅ Grupe de semafoare generate:", grupeSemafor);
 
-        // 💡 Desenăm semafoarele
-        for (let grupa of grupeSemafor) {
-            for (let sem of grupa.semafoare) {
-                sem.deseneaza(ctx);
-            }
-        }
-
         // Adaugă inputuri pentru durată faze
         const fazeInputContainer = document.getElementById("faze-inputuri");
         fazeInputContainer.innerHTML = ""; // curăță dacă e re-generat
@@ -270,6 +349,9 @@ if (window.data) {
                     grupa.time = valoare;
                 }
             });
+            input.addEventListener("click", () => {
+              drawScene(index); 
+            });
 
             wrapper.appendChild(label);
             wrapper.appendChild(input);
@@ -278,6 +360,7 @@ if (window.data) {
 
 
         console.log("grupe semafoare", grupeSemafor);
+        startSemafoareCycle();
 
     }, 1000);    // Inițializează TrafficSimulator
     console.log("🚀 Creez TrafficSimulator...");
@@ -313,7 +396,7 @@ if (window.data) {
             
             // Stochează intervalul pentru a putea fi oprit mai târziu
             window.counterUpdateInterval = updateInterval;
-        } else {
+        }else {
             console.error("❌ Nu s-a putut porni simularea!");
         }
     }, 500);
