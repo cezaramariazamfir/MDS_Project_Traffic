@@ -217,10 +217,18 @@ export class TrafficSimulator {    constructor() {
      * Afișează interfața de control al traficului
      */
     showTrafficControlUI() {
-        // Nu mai cream panel separat - folosim doar sidebar-ul din simuleaza.js
-        console.log("🎨 showTrafficControlUI - folosim sidebar-ul existent");
+        // Nu mai cream panel separat - folosim container-ul din simuleaza.html
+        console.log("🎨 showTrafficControlUI - folosim container-ul din HTML");
         
-        // Doar setăm flag-ul că UI-ul este activ
+        const trafficContainer = document.getElementById('traffic-control-container');
+        if (trafficContainer) {
+            trafficContainer.style.display = 'block';
+            this.populateTrafficControlUI();
+        } else {
+            console.error("Nu s-a găsit container-ul traffic-control-container în HTML");
+        }
+        
+        // Setăm flag-ul că UI-ul este activ
         this.uiPanelActive = true;
     }/**
      * Desenează un preview al traseului pe canvas
@@ -354,18 +362,19 @@ export class TrafficSimulator {    constructor() {
             }
         }
     }    /**
-     * Generează HTML-ul pentru interfața de control
+     * Populează interfața de control cu datele rutelor
      */
-    generateTrafficControlHTML() {
-        let html = `
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h3 style="color: #4a90e2; margin: 0 0 10px 0;">🚦 Control Flux Trafic</h3>
-                <p style="color: #ccc; font-size: 14px; margin: 0;">Setează numărul de mașini pe minut pentru fiecare rută</p>
-            </div>
-        `;
+    populateTrafficControlUI() {
+        const routesContainer = document.getElementById('routes-container');
+        if (!routesContainer) {
+            console.error("Nu s-a găsit container-ul routes-container");
+            return;
+        }
 
+        let html = '';
+        
         if (this.routes.length === 0) {
-            html += `<div style="text-align: center; color: #888;">Nu există rute definite</div>`;
+            html = `<div style="text-align: center; color: #888;">Nu există rute definite</div>`;
         } else {
             this.routes.forEach(route => {
                 // Inițializează contorul pentru această rută dacă nu există
@@ -415,49 +424,32 @@ export class TrafficSimulator {    constructor() {
             });
         }
 
-        // Contor total de mașini
-        const totalCars = Array.from(this.routeCarCounters.values()).reduce((sum, count) => sum + count, 0);
+        routesContainer.innerHTML = html;
         
-        html += `
-            <div style="margin: 20px 0; padding: 15px; border: 2px solid #4a90e2; border-radius: 8px; background: #444; text-align: center;">
-                <h4 style="color: #4a90e2; margin: 0 0 10px 0;">📊 Total Statistici</h4>
-                <div style="font-size: 16px; color: #fff;">
-                    <span>Total mașini trecute: </span>
-                    <span id="totalCarsCount" style="color: #28a745; font-weight: bold; font-size: 18px;">${totalCars} mașini</span>
-                </div>
-            </div>
-        `;
+        // Actualizează contorul total
+        this.updateTotalCarsDisplay();
+        
+        // Atașează event listeners după ce HTML-ul a fost populat
+        this.attachTrafficControlEventListeners();
+        
+        // Desenează preview-urile pentru toate rutele după ce sunt adăugate în DOM
+        setTimeout(() => {
+            this.routes.forEach(route => {
+                this.drawRoutePreview(route);
+            });
+        }, 100);
+    }
 
-        html += `
-            <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #666;">
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <button id="startAllRoutes" 
-                            style="flex: 1; background: #007bff; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                        🚀 Pornește Tot Traficul
-                    </button>
-                    <button id="stopAllRoutes" 
-                            style="flex: 1; background: #6c757d; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                        🛑 Oprește Tot Traficul
-                    </button>
-                </div>
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <button id="resetCounters" 
-                            style="flex: 1; background: #ffc107; color: #000; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                        🔄 Reset Contoare
-                    </button>
-                    <button id="exportStats" 
-                            style="flex: 1; background: #17a2b8; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                        📊 Export Stats
-                    </button>
-                </div>
-                <button id="closeTrafficControl" 
-                        style="width: 100%; background: #333; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">
-                    ✖ Închide Simularea
-                </button>
-            </div>
-        `;
-
-        return html;
+    /**
+     * Actualizează afișarea contorului total de mașini
+     */
+    updateTotalCarsDisplay() {
+        const totalCars = Array.from(this.routeCarCounters.values()).reduce((sum, count) => sum + count, 0);
+        const totalElement = document.getElementById('totalCarsCount');
+        if (totalElement) {
+            totalElement.textContent = `${totalCars} mașini`;
+            totalElement.style.color = totalCars > 0 ? '#28a745' : '#6c757d';
+        }
     }
 
     /**
@@ -534,14 +526,15 @@ export class TrafficSimulator {    constructor() {
                     this.exportTrafficStats();
                 });
             }
-            
-            if (closeBtn) {
+              if (closeBtn) {
                 closeBtn.addEventListener('click', () => {
                     this.stopSimulation();
                     // Restabilește sidebar-ul la starea originală
                     if (window.restoreOriginalSidebar) {
                         window.restoreOriginalSidebar();
                     }
+                    // Redirecționează înapoi la pagina de creare/editare
+                    window.location.href = '/Skibidi_traffic/create/';
                 });
             }
 
@@ -630,7 +623,10 @@ export class TrafficSimulator {    constructor() {
      * Ascunde interfața de control al traficului
      */
     hideTrafficControlUI() {
-        // Nu mai avem panel separat de șters
+        const trafficContainer = document.getElementById('traffic-control-container');
+        if (trafficContainer) {
+            trafficContainer.style.display = 'none';
+        }
         this.uiPanelActive = false;
     }
 
@@ -712,17 +708,13 @@ export class TrafficSimulator {    constructor() {
         
         const totalCars = countersArray.reduce((sum, count) => sum + count, 0);
         console.log(`Total cars: ${totalCars}`);
-    }
-      /**
+    }      /**
      * Actualizează afișarea contorilor în UI
      */
     updateCounterDisplay() {
-        // Remove the uiPanel check since we use sidebar in MDS_Interfata
-        let totalCars = 0;
-        
+        // Actualizează contoarele individuale pentru fiecare rută
         this.routes.forEach(route => {
             const count = this.routeCarCounters.get(route.id) || 0;
-            totalCars += count;
             
             const countElement = document.getElementById(`count-${route.id}`);
             if (countElement) {
@@ -736,11 +728,8 @@ export class TrafficSimulator {    constructor() {
             }
         });
         
-        const totalElement = document.getElementById('totalCarsCount');
-        if (totalElement) {
-            totalElement.textContent = `${totalCars} mașini`;
-            totalElement.style.color = totalCars > 0 ? '#28a745' : '#6c757d';
-        }
+        // Actualizează contorul total
+        this.updateTotalCarsDisplay();
     }
 
     /**

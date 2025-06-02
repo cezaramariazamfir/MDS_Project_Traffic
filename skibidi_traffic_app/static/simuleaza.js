@@ -63,86 +63,6 @@ function drawScene() {
 }
 
 /**
- * Inițializează și afișează interfața de control trafic în sidebar
- */
-function initializeTrafficControlInSidebar() {
-  console.log("🚀 Începe inițializarea interfeței de control trafic...");
-  
-  if (!trafficSimulator) {
-    console.error("❌ trafficSimulator este null sau undefined");
-    return;
-  }
-  
-  if (intersectii.length === 0) {
-    console.error("❌ Nu există intersecții încărcate");
-    return;
-  }
-
-  console.log("✅ Simulator și intersecții verificate, continuăm...");
-  // Inițializează simulatorul cu intersecțiile și callback-ul de desenare
-  trafficSimulator.initialize(intersectii, drawScene);
-  console.log("✅ Simulator inițializat cu intersecțiile");
-  console.log("🔍 Numărul de rute după inițializare:", trafficSimulator.routes ? trafficSimulator.routes.length : "routes nu există");
-  
-  // Obține sidebar-ul
-  const sidebar = document.getElementById('sidebar');
-  if (!sidebar) {
-    console.error("❌ Nu s-a găsit sidebar-ul pentru controlul traficului");
-    return;
-  }
-  
-  console.log("✅ Sidebar găsit:", sidebar);
-
-  // Generează HTML-ul pentru interfața de control
-  const controlHTML = trafficSimulator.generateTrafficControlHTML();
-  console.log("✅ HTML generat pentru control:", controlHTML.substring(0, 100) + "...");
-  
-  // Actualizează conținutul sidebar-ului
-  sidebar.innerHTML = `
-    <div id="title_sidebar">Panou de control <br> elemente de simulare</div>
-    <div style="margin-top: 15px;">
-      ${controlHTML}
-    </div>
-  `;
-  
-  console.log("✅ HTML adăugat în sidebar");
-  
-  // Atașează event listener-ii pentru interfața de control
-  try {
-    trafficSimulator.attachTrafficControlEventListeners();
-    console.log("✅ Event listeners atașați");
-  } catch (error) {
-    console.error("❌ Eroare la atașarea event listeners:", error);
-  }
-  
-  // Inițializează afișarea contorilor
-  try {
-    trafficSimulator.initializeCounterDisplay();
-    console.log("✅ Afișarea contorilor inițializată");
-  } catch (error) {
-    console.error("❌ Eroare la inițializarea afișării contorilor:", error);
-  }
-    // Actualizează contoarele la fiecare 2 secunde
-  const updateInterval = setInterval(() => {
-    if (trafficSimulator && trafficSimulator.isActive()) {
-      trafficSimulator.updateCounterDisplay();
-    }
-  }, 2000);
-  
-  // Stochează intervalul pentru a putea fi oprit mai târziu
-  window.counterUpdateInterval = updateInterval;
-  
-  // Desenează preview-urile pentru toate rutele după ce sunt adăugate în DOM
-  setTimeout(() => {
-    trafficSimulator.routes.forEach(route => {
-      trafficSimulator.drawRoutePreview(route);
-    });
-  }, 100);
-
-  console.log("✅ Interfața de control trafic a fost inițializată în sidebar");
-}
-
-/**
  * Restabilește sidebar-ul la starea originală
  */
 function restoreOriginalSidebar() {
@@ -329,11 +249,13 @@ if (window.data) {
     trafficSimulator = new TrafficSimulator();
     console.log("✅ TrafficSimulator creat:", trafficSimulator);
     
+    // Inițializează simulatorul cu intersecțiile și callback-ul de desenare
+    console.log("✅ Simulator și intersecții verificate, continuăm...");
+    trafficSimulator.initialize(intersectii, drawScene);
+    console.log("✅ Simulator inițializat cu intersecțiile");
+    
     // Expune funcția de restabilire a sidebar-ului la nivel global
     window.restoreOriginalSidebar = restoreOriginalSidebar;
-      // Inițializează interfața de control în sidebar
-    console.log("🚀 Încep inițializarea interfeței în sidebar...");
-    initializeTrafficControlInSidebar();
     
     // Inițializează sistemul de trafic pentru animația mașinilor
     console.log("🚀 Inițializez sistemul de trafic...");
@@ -346,6 +268,16 @@ if (window.data) {
         if (simulationStarted) {
             console.log("✅ Simularea a fost pornită cu succes!");
             console.log("🔍 isSimulationActive:", trafficSimulator.isSimulationActive);
+            
+            // Actualizează contoarele la fiecare 2 secunde
+            const updateInterval = setInterval(() => {
+                if (trafficSimulator && trafficSimulator.isActive()) {
+                    trafficSimulator.updateCounterDisplay();
+                }
+            }, 2000);
+            
+            // Stochează intervalul pentru a putea fi oprit mai târziu
+            window.counterUpdateInterval = updateInterval;
         } else {
             console.error("❌ Nu s-a putut porni simularea!");
         }
