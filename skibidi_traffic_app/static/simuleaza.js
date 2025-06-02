@@ -6,6 +6,7 @@ import SemaforBanda from "./Semafor.js";
 import { calculeazaMatriceCompatibilitate, segmenteSeIntersecteaza} from './logicaSemafoare.js';
 import GrupaSemafor from "./GrupaSemafor.js"; // asigură-te că ai importat
 import { determinaFazeSemafor } from "./logicaSemafoare.js";
+import { TrafficSimulator } from "./trafficsimulator.js";
 
 
 const canvas = document.getElementById("canvas");
@@ -14,6 +15,8 @@ const ctx = canvas.getContext("2d");
 let grupeSemafor = [];
 let scale = 1, offsetX = 0, offsetY = 0;
 let intersectii = [];
+let trafficSimulator = null;
+let dragStartX = 0, dragStartY = 0;
 
 canvas.width = canvas.offsetWidth;
 canvas.height = canvas.offsetHeight;
@@ -57,6 +60,24 @@ function drawScene() {
   deseneazaTraseeSalvate();
 
   deseneazaMasini(ctx);
+}
+
+/**
+ * Restabilește sidebar-ul la starea originală
+ */
+function restoreOriginalSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar) {
+    sidebar.innerHTML = `
+      <div id="title_sidebar">Panou de control <br> elemente de simulare</div>
+    `;
+  }
+  
+  // Oprește intervalul de actualizare a contorilor
+  if (window.counterUpdateInterval) {
+    clearInterval(window.counterUpdateInterval);
+    window.counterUpdateInterval = null;
+  }
 }
 function reconstructFromJSON(data) {
     console.log(data);
@@ -155,80 +176,147 @@ canvas.addEventListener('contextmenu', e => e.preventDefault());
 
 // Inițializează
 if (window.data) {
-    console.log(data);
+    console.log("🔍 Date primite din backend:", window.data);
     reconstructFromJSON(window.data);
     console.log("✅ Intersecție încărcată cu succes.");
-    console.log(data);
-
+    console.log("🔍 Intersecții rezultate:", intersectii);
 
     setTimeout(() => {
-  const intersectie = intersectii[0];
+        const intersectie = intersectii[0];
 
-  const compatibilitate = calculeazaMatriceCompatibilitate(intersectie);
-  const fazeTrasee = determinaFazeSemafor(compatibilitate);
+        const compatibilitate = calculeazaMatriceCompatibilitate(intersectie);
+        const fazeTrasee = determinaFazeSemafor(compatibilitate);
 
-  const vector_semafoare = [];
+        const vector_semafoare = [];
 
-  // 🔍 1. Construiește semafoarele o singură dată, pentru toate benzile IN din toate traseele
-  const trasee = intersectie.trasee || [];
-  for (let traseu of trasee) {
-    const dejaExista = vector_semafoare.some(
-      s => s.stradaIndex === traseu.stradaIndex && s.bandaIndex === traseu.bandaIndex
-    );
+        // 🔍 1. Construiește semafoarele o singură dată, pentru toate benzile IN din toate traseele
+        const trasee = intersectie.trasee || [];
+        for (let traseu of trasee) {
+            const dejaExista = vector_semafoare.some(
+                s => s.stradaIndex === traseu.stradaIndex && s.bandaIndex === traseu.bandaIndex
+            );
 
-    if (!dejaExista) {
-      vector_semafoare.push(new SemaforBanda(intersectie, traseu.stradaIndex, traseu.bandaIndex));
-    }
-  }
+            if (!dejaExista) {
+                vector_semafoare.push(new SemaforBanda(intersectie, traseu.stradaIndex, traseu.bandaIndex));
+            }
+        }
 
-  let estePrimaFaza = true;
-  for (let faza of fazeTrasee) {
-    const semafoareSet = new Set();
+        let estePrimaFaza = true;
+        for (let faza of fazeTrasee) {
+            const semafoareSet = new Set();
 
-    for (let idxTraseu of faza) {
-      const traseu = intersectie.trasee[idxTraseu];
+            for (let idxTraseu of faza) {
+                const traseu = intersectie.trasee[idxTraseu];
 
-      const semafor = vector_semafoare.find(
-        s => s.stradaIndex === traseu.stradaIndex && s.bandaIndex === traseu.bandaIndex
-      );
+                const semafor = vector_semafoare.find(
+                    s => s.stradaIndex === traseu.stradaIndex && s.bandaIndex === traseu.bandaIndex
+                );
 
-      if (semafor) {
-        // Folosim un ID unic pentru fiecare semafor ca cheie în Set
-        const cheieUnica = `${semafor.stradaIndex}_${semafor.bandaIndex}`;
-        semafoareSet.add(cheieUnica);
-      }
-    }
+                if (semafor) {
+                    // Folosim un ID unic pentru fiecare semafor ca cheie în Set
+                    const cheieUnica = `${semafor.stradaIndex}_${semafor.bandaIndex}`;
+                    semafoareSet.add(cheieUnica);
+                }
+            }
 
-    // Refacem vectorul de obiecte efective din cheile unice
-    const semafoareFaza = [...semafoareSet].map(cheie => {
-      const [stradaIndex, bandaIndex] = cheie.split("_").map(Number);
-      return vector_semafoare.find(s => s.stradaIndex === stradaIndex && s.bandaIndex === bandaIndex);
-    });
+            // Refacem vectorul de obiecte efective din cheile unice
+            const semafoareFaza = [...semafoareSet].map(cheie => {
+                const [stradaIndex, bandaIndex] = cheie.split("_").map(Number);
+                return vector_semafoare.find(s => s.stradaIndex === stradaIndex && s.bandaIndex === bandaIndex);
+            });
 
-    let culoare = estePrimaFaza ? "green" : "red";
-    const grupa = new GrupaSemafor(culoare, 10, semafoareFaza);
-    grupa.changeColor(culoare);
-    grupeSemafor.push(grupa);
-    estePrimaFaza = false;
-  }
+            let culoare = estePrimaFaza ? "green" : "red";
+            const grupa = new GrupaSemafor(culoare, 10, semafoareFaza);
+            grupa.changeColor(culoare);
+            grupeSemafor.push(grupa);
+            estePrimaFaza = false;
+        }
 
-  console.log("✅ Grupe de semafoare generate:", grupeSemafor);
+        console.log("✅ Grupe de semafoare generate:", grupeSemafor);
 
-  // 💡 Desenăm semafoarele
-  for (let grupa of grupeSemafor) {
-    for (let sem of grupa.semafoare) {
+        // 💡 Desenăm semafoarele
+        for (let grupa of grupeSemafor) {
+            for (let sem of grupa.semafoare) {
+                sem.deseneaza(ctx);
+            }
+        }
 
-      sem.deseneaza(ctx);
-    }
-  }
+        // Adaugă inputuri pentru durată faze
+        const fazeInputContainer = document.getElementById("faze-inputuri");
+        fazeInputContainer.innerHTML = ""; // curăță dacă e re-generat
 
-  // Opțional, salvează global
-  window.grupeSemafor = grupeSemafor;
+        grupeSemafor.forEach((grupa, index) => {
+            const wrapper = document.createElement("div");
+            wrapper.style.marginBottom = "10px";
 
-}, 5000);
+            const label = document.createElement("label");
+            label.textContent = `Faza ${index + 1}: `;
+            label.style.color = "#fff";
+            label.style.marginRight = "10px";
+
+            const input = document.createElement("input");
+            input.type = "number";
+            input.min = 1;
+            input.value = grupa.time || 10; // folosește durata existentă
+            input.style.padding = "5px";
+            input.style.borderRadius = "5px";
+            input.style.border = "1px solid #ccc";
+            input.style.width = "80px";
+
+            // Actualizează obiectul grupa când se modifică inputul
+            input.addEventListener("input", () => {
+                const valoare = parseInt(input.value, 10);
+                if (!isNaN(valoare) && valoare > 0) {
+                    grupa.time = valoare;
+                }
+            });
+
+            wrapper.appendChild(label);
+            wrapper.appendChild(input);
+            fazeInputContainer.appendChild(wrapper);
+        });
+
+
+        console.log("grupe semafoare", grupeSemafor);
+
+    }, 1000);    // Inițializează TrafficSimulator
+    console.log("🚀 Creez TrafficSimulator...");
+    trafficSimulator = new TrafficSimulator();
+    console.log("✅ TrafficSimulator creat:", trafficSimulator);
     
-//   initTrafic(drawScene);
-//   simuleazaTrafic(intersectii, 10); // nr. de mașini inițiale
+    // Inițializează simulatorul cu intersecțiile și callback-ul de desenare
+    console.log("✅ Simulator și intersecții verificate, continuăm...");
+    trafficSimulator.initialize(intersectii, drawScene);
+    console.log("✅ Simulator inițializat cu intersecțiile");
+    
+    // Expune funcția de restabilire a sidebar-ului la nivel global
+    window.restoreOriginalSidebar = restoreOriginalSidebar;
+    
+    // Inițializează sistemul de trafic pentru animația mașinilor
+    console.log("🚀 Inițializez sistemul de trafic...");
+    initTrafic(drawScene);
+    
+    // Așteaptă puțin pentru ca UI-ul să se încarce complet, apoi pornește simularea
+    setTimeout(() => {
+        console.log("🚀 Pornesc simularea de trafic...");
+        const simulationStarted = trafficSimulator.startSimulation();
+        if (simulationStarted) {
+            console.log("✅ Simularea a fost pornită cu succes!");
+            console.log("🔍 isSimulationActive:", trafficSimulator.isSimulationActive);
+            
+            // Actualizează contoarele la fiecare 2 secunde
+            const updateInterval = setInterval(() => {
+                if (trafficSimulator && trafficSimulator.isActive()) {
+                    trafficSimulator.updateCounterDisplay();
+                }
+            }, 2000);
+            
+            // Stochează intervalul pentru a putea fi oprit mai târziu
+            window.counterUpdateInterval = updateInterval;
+        } else {
+            console.error("❌ Nu s-a putut porni simularea!");
+        }
+    }, 500);
 
 } else {
   console.error("❌ Nu s-au primit date pentru intersecție.");

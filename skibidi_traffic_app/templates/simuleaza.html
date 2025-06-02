@@ -44,10 +44,67 @@
 
     </div>
 
-<div id="drawing_container">
-  <div id="sidebar">
-    <div id="title_sidebar">Panou de control <br> elemente de simulare</div>
-    {% comment %} DE PUS BUTOANE LOGICA SIMULARE!!! {% endcomment %}
+<div id="drawing_container">  <div id="sidebar">
+
+    <!-- Durata faze semafoare -->
+    <div id="faze-container" style="margin-top: 20px; text-align: center;">
+      <h3 style="color: #4a90e2; margin: 0 0 10px 0;">⏱️ Durata fiecărei faze (secunde)</h3>
+      <div id="faze-inputuri" style="display: flex; flex-direction: column; align-items: center; gap: 10px;"></div>
+    </div>
+
+
+
+
+    
+    <!-- Traffic Control UI moved from trafficsimulator.js -->
+    <div id="traffic-control-container" style="display: none;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h3 style="color: #4a90e2; margin: 0 0 10px 0;">🚦 Control Flux Trafic</h3>
+        <p style="color: #ccc; font-size: 14px; margin: 0;">Setează numărul de mașini pe minut pentru fiecare rută</p>
+      </div>
+      
+      <!-- Routes will be dynamically populated here -->
+      <div id="routes-container">
+        <div style="text-align: center; color: #888;">Nu există rute definite</div>
+      </div>
+      
+      <!-- Total Statistics -->
+      <div style="margin: 20px 0; padding: 15px; border: 2px solid #4a90e2; border-radius: 8px; background: #444; text-align: center;">
+        <h4 style="color: #4a90e2; margin: 0 0 10px 0;">📊 Total Statistici</h4>
+        <div style="font-size: 16px; color: #fff;">
+          <span>Total mașini trecute: </span>
+          <span id="totalCarsCount" style="color: #28a745; font-weight: bold; font-size: 18px;">0 mașini</span>
+        </div>
+      </div>
+      
+      <!-- Control Buttons -->
+      <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #666;">
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+          <button id="startAllRoutes" 
+                  style="flex: 1; background: #007bff; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            🚀 Pornește Tot Traficul
+          </button>
+          <button id="stopAllRoutes" 
+                  style="flex: 1; background: #6c757d; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            🛑 Oprește Tot Traficul
+          </button>
+        </div>
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+          <button id="resetCounters" 
+                  style="flex: 1; background: #ffc107; color: #000; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            🔄 Reset Contoare
+          </button>
+          <button id="exportStats" 
+                  style="flex: 1; background: #17a2b8; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            📊 Export Stats
+          </button>
+        </div>
+        <button id="closeTrafficControl" 
+                style="width: 100%; background: #333; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">
+          ✖ Închide Simularea
+        </button>
+      </div>
+    </div>
   </div>
 
   <canvas id="canvas"></canvas>
