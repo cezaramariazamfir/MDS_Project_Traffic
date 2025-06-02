@@ -538,8 +538,17 @@ export class TrafficSimulator {    constructor() {
                     if (window.restoreOriginalSidebar) {
                         window.restoreOriginalSidebar();
                     }
-                    // Redirecționează înapoi la pagina de creare/editare
-                    window.location.href = '/Skibidi_traffic/create/';
+                    
+                    // Redirecționează înapoi la pagina de creare/editare cu ID-ul intersecției
+                    const intersectieId = this.getIntersectionId();
+                    console.log("🔍 ID intersecție găsit:", intersectieId);
+                    
+                    if (intersectieId) {
+                        window.location.href = `/Skibidi_traffic/create?id=${intersectieId}`;
+                    } else {
+                        // Fallback la pagina de creare fără ID
+                        window.location.href = '/Skibidi_traffic/create/';
+                    }
                 });
             }
 
@@ -830,6 +839,40 @@ export class TrafficSimulator {    constructor() {
         
         // Toleranță de 50 pixeli pentru a considera că semaforul controlează ruta
         return distanta <= 50;
+    }
+
+    /**
+     * Extrage ID-ul intersecției din URL sau din datele disponibile
+     * @returns {string|null} - ID-ul intersecției sau null dacă nu se găsește
+     */
+    getIntersectionId() {
+        // 1. Încearcă să extragă ID-ul din URL (format: /simuleaza/<id>/)
+        const urlPath = window.location.pathname;
+        const match = urlPath.match(/\/simuleaza\/(\d+)\//);
+        if (match) {
+            return match[1];
+        }
+
+        // 2. Încearcă să extragă ID-ul din window.data dacă este disponibil
+        if (window.data) {
+            // Dacă window.data este o intersecție cu ID
+            if (window.data.id) {
+                return window.data.id;
+            }
+            // Dacă window.data are o listă de intersecții
+            if (window.data.intersectii && window.data.intersectii.length > 0 && window.data.intersectii[0].id) {
+                return window.data.intersectii[0].id;
+            }
+        }
+
+        // 3. Fallback: încearcă să extragă din parametrii URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const idParam = urlParams.get('id');
+        if (idParam) {
+            return idParam;
+        }
+
+        return null;
     }
 }
 
