@@ -102,10 +102,39 @@ export default class Masina {    constructor(traseu, viteza = 5, routeId = null)
             this.pozitieCurenta.x += (dx / distanta) * vitezaEfectiva;
             this.pozitieCurenta.y += (dy / distanta) * vitezaEfectiva;
         }
-    }    // Calculează viteza efectivă luând în considerare mașinile din față
+    }    // Calculează viteza efectivă luând în considerare mașinile din față și semaforurile
     calculezaVitezaEfectiva() {
-        const distantaMinimaSiguranta = this.lungime + 15; // Distanță de siguranță
-        const distantaDetectie = distantaMinimaSiguranta * 3; // Distanță de detectie redusă
+        const distantaMinimaSiguranta = this.lungime + 25; // Distanță de siguranță mărită pentru prevenirea suprapunerii
+        const distantaDetectie = distantaMinimaSiguranta * 5; // Distanță de detectie mărită pentru reacție mai bună
+        
+        // Verifică semaforurile din față mai întâi
+        const semaforAproape = this.detecteazaSemaforDinFata(100); // Detectează semafoare într-un rază mai mare
+        if (semaforAproape) {
+            const distantaLaSemafor = semaforAproape.distanta;
+            
+            if (semaforAproape.status === "red") {
+                // Oprește la semafor dacă este roșu - distanță de oprire mărită pentru siguranță
+                if (distantaLaSemafor <= 20) {
+                    return 0; // Oprește complet cu mai mult spațiu (20px față de 15px)
+                } else if (distantaLaSemafor <= 50) {
+                    // Încetinește treptat când se apropie de semafor
+                    return this.viteza * 0.15; // Încetinire mai agresivă
+                } else {
+                    // Începe să încetinească din timp
+                    const factorIncetinire = Math.max(0.25, distantaLaSemafor / 100);
+                    return this.viteza * factorIncetinire;
+                }
+            } else if (semaforAproape.status === "yellow") {
+                // Comportament pentru galben - încetinește sau accelerează în funcție de distanță
+                if (distantaLaSemafor <= 30) {
+                    return 0; // Oprește dacă este prea aproape (distanță mărită)
+                } else if (distantaLaSemafor <= 60) {
+                    return this.viteza * 0.3; // Încetinește mai mult
+                }
+            }
+            // Pentru verde sau distanțe mari, continuă cu verificarea mașinilor
+        }
+        
         const masinaAproape = this.detecteazaMasinaDinFata(distantaDetectie);
         
         if (masinaAproape) {
@@ -113,20 +142,29 @@ export default class Masina {    constructor(traseu, viteza = 5, routeId = null)
             
             // Verifică doar dacă sunt într-adevăr în intersecție (mai strict)
             const esteInIntersectie = this.verificaPuncteComune(masinaAproape, 15);
-            const distantaAdjustata = esteInIntersectie ? distantaMinimaSiguranta * 1.2 : distantaMinimaSiguranta;
+            const distantaAdjustata = esteInIntersectie ? distantaMinimaSiguranta * 1.8 : distantaMinimaSiguranta;
+            
+            // Oprire completă pentru evitarea suprapunerii
+            if (distantaLaMasina <= distantaMinimaSiguranta * 0.9) {
+                return 0; // Oprește complet când este prea aproape
+            }
             
             if (distantaLaMasina <= distantaAdjustata) {
-                // Viteza redusă dar nu foarte mică
-                const vitezaMinima = esteInIntersectie ? 0.2 : 0.3; 
+                // Viteza foarte redusă când este aproape
+                const vitezaMinima = esteInIntersectie ? 0.05 : 0.1; 
                 return vitezaMinima;
+            } else if (distantaLaMasina <= distantaAdjustata * 1.5) {
+                // Încetinire graduală în zona de siguranță extinsă
+                const factorDistanta = (distantaLaMasina - distantaAdjustata) / (distantaAdjustata * 0.5);
+                return this.viteza * Math.max(0.2, factorDistanta * 0.6);
             } else {
-                // Adaptarea mai gradată a vitezei
+                // Adaptarea mai gradată a vitezei pentru distanțe mai mari
                 const distantaUtila = distantaDetectie - distantaAdjustata;
                 const distantaRamasa = distantaLaMasina - distantaAdjustata;
                 
-                // Factor de adaptare mai permisiv
+                // Factor de adaptare mai sigur
                 let factorAdaptare = Math.min(1.0, distantaRamasa / distantaUtila);
-                factorAdaptare = Math.max(0.4, factorAdaptare); // Nu scădea sub 40% din viteză
+                factorAdaptare = Math.max(0.4, factorAdaptare); // Viteza minimă mărită pentru fluiditate
                 
                 return this.viteza * factorAdaptare;
             }
@@ -162,7 +200,7 @@ export default class Masina {    constructor(traseu, viteza = 5, routeId = null)
     }    // Verifică dacă două mașini sunt pe același traseu sau trasee similare
     suntPeAcelasiTraseu(altaMasina) {
         // Toleranță mult mai strictă pentru a evita opririle false
-        const toleranta = 25; 
+        const toleranta = 20; // Redus de la 25 la 20 pentru precizie mai mare
         
         // Compară pozițiile actuale
         const punctulMeuCurent = this.pozitieCurenta;
@@ -174,7 +212,7 @@ export default class Masina {    constructor(traseu, viteza = 5, routeId = null)
         );
         
         // Dacă sunt prea departe, sigur nu sunt pe același traseu
-        if (distantaIntrePuncte > toleranta * 2) return false;
+        if (distantaIntrePuncte > toleranta * 2.5) return false; // Rază mărită pentru detecție mai bună
         
         // Verifică direcția - trebuie să meargă în aceeași direcție
         const directiaMea = this.unghi;
@@ -186,13 +224,45 @@ export default class Masina {    constructor(traseu, viteza = 5, routeId = null)
             diferentaUnghi = 2 * Math.PI - diferentaUnghi;
         }
         
-        // Verifică doar mașinile care merg în aceeași direcție (±45 grade) și sunt foarte aproape
-        const directieSimilara = diferentaUnghi < Math.PI / 4; // 45 grade toleranță
+        // Verifică doar mașinile care merg în aceeași direcție (±30 grade în loc de ±45)
+        const directieSimilara = diferentaUnghi < Math.PI / 6; // 30 grade toleranță pentru precizie mai mare
         const pozitieApropiata = distantaIntrePuncte < toleranta;
         
-        // Returnează true DOAR dacă ambele condiții sunt îndeplinite
-        return directieSimilara && pozitieApropiata;
-    }    // Verifică dacă două mașini se află pe puncte comune din trasee (intersecții)
+        // Verificare suplimentară: mașinile trebuie să fie aproape de același traseu fizic
+        const suntPeTraseuSimilar = this.verificaTraseuSimilar(altaMasina, toleranta);
+        
+        // Returnează true DOAR dacă toate condițiile sunt îndeplinite
+        return directieSimilara && pozitieApropiata && suntPeTraseuSimilar;
+    }
+    
+    // Verifică dacă mașinile sunt pe un traseu fizic similar
+    verificaTraseuSimilar(altaMasina, toleranta) {
+        // Verifică câteva puncte din traseul fiecărei mașini pentru a vedea dacă se suprapun
+        const puncteDeVerificat = Math.min(5, this.traseu.length, altaMasina.traseu.length);
+        let puncteComune = 0;
+        
+        for (let i = 0; i < puncteDeVerificat; i++) {
+            const indiceMeu = Math.min(this.indexPunctCurent + i, this.traseu.length - 1);
+            const indiceSau = Math.min(altaMasina.indexPunctCurent + i, altaMasina.traseu.length - 1);
+            
+            if (indiceMeu < this.traseu.length && indiceSau < altaMasina.traseu.length) {
+                const punctMeu = this.traseu[indiceMeu];
+                const punctSau = altaMasina.traseu[indiceSau];
+                
+                const distanta = Math.sqrt(
+                    Math.pow(punctMeu.x - punctSau.x, 2) + 
+                    Math.pow(punctMeu.y - punctSau.y, 2)
+                );
+                
+                if (distanta < toleranta) {
+                    puncteComune++;
+                }
+            }
+        }
+        
+        // Cel puțin jumătate din punctele verificate trebuie să fie comune
+        return puncteComune >= Math.ceil(puncteDeVerificat / 2);
+    }// Verifică dacă două mașini se află pe puncte comune din trasee (intersecții)
     verificaPuncteComune(altaMasina, toleranta) {
         // Verifică doar punctele foarte apropiate și doar dacă mașinile sunt într-adevăr pe acele puncte
         for (let punctMeu of this.traseu) {
@@ -233,10 +303,24 @@ export default class Masina {    constructor(traseu, viteza = 5, routeId = null)
         
         // Pozitiv înseamnă că este în față, verifică și că nu este prea lateral
         const distantaLaterala = Math.abs(-dx * Math.sin(this.unghi) + dy * Math.cos(this.unghi));
-        const tolerantaLaterala = this.latime * 1.5; // Toleranță redusă pentru detecție mai precisă
+        const tolerantaLaterala = this.latime * 1.2; // Toleranță redusă pentru detecție mai precisă
         
-        // Returnează true doar dacă este în față și pe aceeași bandă (mai strict)
-        return produsScalar > 10 && distantaLaterala < tolerantaLaterala; // Distanță minimă de 10px în față
+        // Verificare suplimentară: mașina în față trebuie să aibă un progres mai mare pe traseu
+        const progresulMeu = this.calculeazaProgresulPeTraseu();
+        const progresulSau = altaMasina.calculeazaProgresulPeTraseu();
+        const estePeAcelasiTraseu = this.suntPeAcelasiTraseu(altaMasina);
+        
+        // Condițiile pentru a considera că mașina este în față:
+        // 1. Produsul scalar pozitiv (în direcția de mers)
+        // 2. Distanța laterală mică (pe aceeași bandă)
+        // 3. Progres similar pe traseu (sunt pe același traseu)
+        // 4. Distanță minimă în față pentru a evita detectarea în paralel
+        const esteInFata = produsScalar > 15 && // Mărită distanța minimă de la 10px la 15px
+                          distantaLaterala < tolerantaLaterala &&
+                          estePeAcelasiTraseu &&
+                          (Math.abs(progresulMeu - progresulSau) < 0.3 || progresulSau > progresulMeu);
+        
+        return esteInFata;
     }
 
     // Calculează progresul pe traseu (între 0 și 1)
@@ -276,14 +360,19 @@ export default class Masina {    constructor(traseu, viteza = 5, routeId = null)
         }
         
         return distantaTotala > 0 ? distantaParcursa / distantaTotala : 1;
-    }
-
-    // Calculează distanța euclidiană până la o altă mașină
+    }    // Calculează distanța reală între două mașini (ținând cont de dimensiuni)
     calculeazaDistantaLaMasina(altaMasina) {
-        return Math.sqrt(
+        // Distanța euclidiană între centrele mașinilor
+        const distantaCentre = Math.sqrt(
             Math.pow(this.pozitieCurenta.x - altaMasina.pozitieCurenta.x, 2) + 
             Math.pow(this.pozitieCurenta.y - altaMasina.pozitieCurenta.y, 2)
         );
+        
+        // Scade lungimea ambelor mașini pentru a obține distanța reală dintre ele
+        const distantaReala = distantaCentre - (this.lungime / 2) - (altaMasina.lungime / 2);
+        
+        // Returnează minimum 0 pentru a evita valorile negative
+        return Math.max(0, distantaReala);
     }deseneaza(ctx) {
         ctx.save(); // Salvează starea curentă a contextului
         
@@ -755,8 +844,81 @@ export default class Masina {    constructor(traseu, viteza = 5, routeId = null)
                 "#FFEB3B", "#FFC107", "#FF9800", "#FF5722", // galben, portocaliu
                 "#795548", "#9E9E9E", "#607D8B", "#263238"  // maro, gri, albastru-gri
             ];
-            return culori[Math.floor(Math.random() * culori.length)];
+            return culori[Math.floor(Math.random() * culori.length)];        }
+    }
+    
+    // Detectează semaforurile din față pe traseul curent
+    detecteazaSemaforDinFata(distantaMaxima) {
+        // Verifică dacă există grupele de semafoare globale
+        if (!window.grupeSemafor || !Array.isArray(window.grupeSemafor)) {
+            return null;
         }
+        
+        let semaforCelMaiAproape = null;
+        let distantaMinima = Infinity;
+        
+        // Iterează prin toate grupele de semafoare
+        for (let grupa of window.grupeSemafor) {
+            if (!grupa.semafoare || !Array.isArray(grupa.semafoare)) {
+                continue;
+            }
+            
+            // Verifică fiecare semafor din grupă
+            for (let semafor of grupa.semafoare) {
+                if (!semafor.banda) {
+                    continue;
+                }
+                
+                const distantaLaSemafor = this.calculeazaDistantaLaSemafor(semafor);
+                
+                // Verifică dacă semaforul este în față pe traseu
+                if (this.esteSemaforInFata(semafor, distantaMaxima) && distantaLaSemafor < distantaMinima) {
+                    distantaMinima = distantaLaSemafor;
+                    semaforCelMaiAproape = {
+                        semafor: semafor,
+                        status: semafor.status,
+                        distanta: distantaLaSemafor
+                    };
+                }
+            }
+        }
+        
+        return semaforCelMaiAproape;
+    }
+    
+    // Calculează distanța până la un semafor
+    calculeazaDistantaLaSemafor(semafor) {
+        const dx = semafor.banda.x - this.pozitieCurenta.x;
+        const dy = semafor.banda.y - this.pozitieCurenta.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+    
+    // Verifică dacă semaforul este în fața mașinii pe traseu
+    esteSemaforInFata(semafor, distantaMaxima) {
+        const distantaLaSemafor = this.calculeazaDistantaLaSemafor(semafor);
+        
+        // Prea departe
+        if (distantaLaSemafor > distantaMaxima) {
+            return false;
+        }
+        
+        // Verifică dacă semaforul este pe traseul mașinii
+        // Caută punctul cel mai apropiat din traseu la semafor
+        for (let i = this.indexPunctCurent; i < this.traseu.length; i++) {
+            const punctTraseu = this.traseu[i];
+            const distantaSemaforLaPunct = Math.sqrt(
+                Math.pow(semafor.banda.x - punctTraseu.x, 2) + 
+                Math.pow(semafor.banda.y - punctTraseu.y, 2)
+            );
+            
+            // Dacă semaforul este foarte aproape de un punct din traseu (toleranță de 30 pixeli)
+            if (distantaSemaforLaPunct <= 30) {
+                // Verifică dacă punctul din traseu este în față (indexul mai mare decât cel curent)
+                return i >= this.indexPunctCurent;
+            }
+        }
+        
+        return false;
     }
 }
 

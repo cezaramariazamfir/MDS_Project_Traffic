@@ -356,10 +356,11 @@ if (window.data) {
             wrapper.appendChild(label);
             wrapper.appendChild(input);
             fazeInputContainer.appendChild(wrapper);
-        });
-
-
-        console.log("grupe semafoare", grupeSemafor);
+        });        console.log("grupe semafoare", grupeSemafor);
+        
+        // Setează grupele de semafoare la nivel global pentru ca mașinile să le poată accesa
+        window.grupeSemafor = grupeSemafor;
+        
         startSemafoareCycle();
 
     }, 1000);    // Inițializează TrafficSimulator

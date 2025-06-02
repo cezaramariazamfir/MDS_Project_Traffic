@@ -102,6 +102,11 @@ export class TrafficSimulator {    constructor() {
     /**
      * Generează o descriere pentru o rută bazată pe punctele sale
      */
+
+
+
+
+    
     generateRouteDescription(points) {
         if (points.length < 2) return "Rută incompletă";
         
@@ -567,9 +572,14 @@ export class TrafficSimulator {    constructor() {
         const interval = 60000 / flow;        const intervalId = setInterval(() => {
             console.log("⏰ Timer pentru generare mașini - isSimulationActive:", this.isSimulationActive);
             if (this.isSimulationActive) {
-                const vitezaAleatoare = 1 + Math.random() * 3;
-                console.log("🚗 Încerc să adaug mașină pe ruta:", routeId, "cu viteza:", vitezaAleatoare);
-                adaugaMasina(route.points, vitezaAleatoare, routeId);
+                // Verifică dacă semaforul pentru această rută este verde înainte de a genera mașină
+                if (this.checkTrafficLightForRoute(route)) {
+                    const vitezaAleatoare = 1 + Math.random() * 3;
+                    console.log("🚗 Încerc să adaug mașină pe ruta:", routeId, "cu viteza:", vitezaAleatoare);
+                    adaugaMasina(route.points, vitezaAleatoare, routeId);
+                } else {
+                    console.log("🔴 Nu generez mașină pe ruta", routeId, "- semaforul este roșu");
+                }
             } else {
                 console.warn("⚠️ Simularea nu este activă - nu adaug mașină");
             }
@@ -674,6 +684,9 @@ export class TrafficSimulator {    constructor() {
         this.printTrafficStats();
     }
 
+
+    
+
     /**
      * Obține array cu numărul de mașini pentru fiecare rută
      * Returnează format [2,1,3] unde indexul corespunde cu ordinea rutelor
@@ -763,6 +776,60 @@ export class TrafficSimulator {    constructor() {
     initializeCounterDisplay() {
         // Initialize the counter display with current values
         this.updateCounterDisplay();
+    }
+
+    /**
+     * Verifică dacă semaforul pentru o anumită rută permite generarea mașinilor
+     * @param {Object} route - Ruta pentru care se verifică semaforul
+     * @returns {boolean} - true dacă se pot genera mașini, false altfel
+     */
+    checkTrafficLightForRoute(route) {
+        // Verifică dacă există grupele de semafoare globale
+        if (!window.grupeSemafor || !Array.isArray(window.grupeSemafor)) {
+            console.log("⚠️ window.grupeSemafor nu este disponibil - permit generarea mașinilor");
+            return true; // Permite generarea dacă nu există semafoare
+        }
+
+        // Găsește semaforul care controlează această rută
+        for (let grupa of window.grupeSemafor) {
+            if (!grupa.semafoare || !Array.isArray(grupa.semafoare)) {
+                continue;
+            }
+            
+            for (let semafor of grupa.semafoare) {
+                // Verifică dacă semaforul corespunde cu ruta
+                if (this.isTrafficLightForRoute(semafor, route)) {
+                    // Returnează true doar dacă semaforul este verde
+                    return semafor.status === "green";
+                }
+            }
+        }
+        
+        // Dacă nu găsește un semafor pentru această rută, permite generarea
+        console.log("🟡 Nu s-a găsit semafor pentru ruta", route.name, "- permit generarea");
+        return true;
+    }
+
+    /**
+     * Verifică dacă un semafor controlează o anumită rută
+     * @param {Object} semafor - Semaforul de verificat
+     * @param {Object} route - Ruta de verificat
+     * @returns {boolean} - true dacă semaforul controlează ruta
+     */
+    isTrafficLightForRoute(semafor, route) {
+        if (!semafor.banda || !route.points || route.points.length === 0) {
+            return false;
+        }
+
+        // Verifică dacă primul punct al rutei este aproape de poziția semaforului
+        const punctStart = route.points[0];
+        const distanta = Math.sqrt(
+            Math.pow(semafor.banda.x - punctStart.x, 2) + 
+            Math.pow(semafor.banda.y - punctStart.y, 2)
+        );
+        
+        // Toleranță de 50 pixeli pentru a considera că semaforul controlează ruta
+        return distanta <= 50;
     }
 }
 
