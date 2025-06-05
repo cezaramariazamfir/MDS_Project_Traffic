@@ -1,4 +1,4 @@
-import { initAnimatieMasini, adaugaMasina, getMasini ,setDrawSceneCallback, genereareMasiniPeTraseeleSalvate, clearMasini, resetContorMasini, setTrafficSimulatorRef } from './masina.js';
+import { initAnimatieMasini, adaugaMasina, getMasini ,setDrawSceneCallback, genereareMasiniPeTraseeleSalvate, clearMasini, resetContorMasini, setTrafficSimulatorRef, canSpawnCarOnRoute } from './masina.js';
 
 /**
  * TrafficSimulator - Clasa pentru controlul avânsat al traficului
@@ -102,6 +102,11 @@ export class TrafficSimulator {    constructor() {
     /**
      * Generează o descriere pentru o rută bazată pe punctele sale
      */
+
+
+
+
+    
     generateRouteDescription(points) {
         if (points.length < 2) return "Rută incompletă";
         
@@ -124,16 +129,21 @@ export class TrafficSimulator {    constructor() {
      * Activează simularea și afișează interfața de control
      */
     startSimulation() {
+        console.log("🎯 startSimulation() apelat");
+        
         // Sincronizează cu intersecțiile actuale din window.intersectii
         this.extractRoutes();
-        
+        console.log("🔍 Rute extrase în startSimulation:", this.routes.length);
         
         if (this.routes.length === 0) {
+            console.error("❌ Nu există rute definite pentru simulare!");
             alert("Nu există rute definite pentru simulare!");
             return false;
         }
 
         this.isSimulationActive = true;
+        console.log("✅ isSimulationActive setat la true");
+        
         this.hideIntersectionControls();
         this.showTrafficControlUI();
         
@@ -142,6 +152,7 @@ export class TrafficSimulator {    constructor() {
             this.routeFlows.set(route.id, 10); // 10 mașini/minut implicit
         });
 
+        console.log("✅ startSimulation() finalizat cu succes");
         return true;
     }/**
      * Oprește simularea și restabilește interfața normală
@@ -211,44 +222,19 @@ export class TrafficSimulator {    constructor() {
      * Afișează interfața de control al traficului
      */
     showTrafficControlUI() {
-        // 🔄 Șterge panoul existent pentru a forța regenerarea cu rutele actuale
-        if (this.uiPanel) {
-            console.log("🗑️ Ștergere panou UI existent pentru regenerare...");
-            this.uiPanel.remove();
-            this.uiPanel = null;
+        // Nu mai cream panel separat - folosim container-ul din simuleaza.html
+        console.log("🎨 showTrafficControlUI - folosim container-ul din HTML");
+        
+        const trafficContainer = document.getElementById('traffic-control-container');
+        if (trafficContainer) {
+            trafficContainer.style.display = 'block';
+            this.populateTrafficControlUI();
+        } else {
+            console.error("Nu s-a găsit container-ul traffic-control-container în HTML");
         }
-
-        console.log("🎨 Creare panou UI nou cu", this.routes.length, "rute...");
-
-        // Creează panoul UI
-        this.uiPanel = document.createElement('div');
-        this.uiPanel.id = 'trafficControlPanel';
-        this.uiPanel.innerHTML = this.generateTrafficControlHTML();
         
-        // Stilizează panoul
-        this.uiPanel.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 400px;
-            max-height: 80vh;
-            background: white;
-            border: 2px solid #333;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            z-index: 1000;
-            overflow-y: auto;
-            font-family: Arial, sans-serif;
-        `;        document.body.appendChild(this.uiPanel);
-        this.attachTrafficControlEventListeners();
-        
-        // Desenează preview-urile pentru toate rutele după ce sunt adăugate în DOM
-        setTimeout(() => {
-            this.routes.forEach(route => {
-                this.drawRoutePreview(route);
-            });
-        }, 100);
+        // Setăm flag-ul că UI-ul este activ
+        this.uiPanelActive = true;
     }/**
      * Desenează un preview al traseului pe canvas
      */
@@ -380,77 +366,99 @@ export class TrafficSimulator {    constructor() {
                 ctx.restore();
             }
         }
-    }
+    }    /**
+     * Populează interfața de control cu datele rutelor
+     */
+    // populateTrafficControlUI() {
+    //     const routesContainer = document.getElementById('routes-container');
+    //     if (!routesContainer) {
+    //         console.error("Nu s-a găsit container-ul routes-container");
+    //         return;
+    //     }
+        
+
+    //     let html = '';
+        
+    //     if (this.routes.length === 0) {
+    //         html = `<div style="text-align: center; color: #888;">Nu există rute definite</div>`;
+    //     } else {
+    //         this.routes.forEach(route => {
+    //             // Inițializează contorul pentru această rută dacă nu există
+    //             if (!this.routeCarCounters.has(route.id)) {
+    //                 this.routeCarCounters.set(route.id, 0);
+    //             }
+                
+    //             html += `
+    //                 <div style="margin-bottom: 15px; padding: 15px; border: 1px solid #666; border-radius: 8px; background: #555;">
+    //                     <div style="font-weight: bold; color: #fff; margin-bottom: 8px;">${route.name}</div>
+    //                     <div style="font-size: 12px; color: #ccc; margin-bottom: 10px;">${route.description}</div>
+                        
+    //                     <!-- Contor mașini trecute -->
+    //                     <div style="margin: 10px 0; padding: 8px; background: #444; border-radius: 4px; border: 1px solid #666;">
+    //                         <span style="color: #fff; font-size: 12px;">Mașini trecute: </span>
+    //                         <span id="count-${route.id}" style="color: #28a745; font-weight: bold; font-size: 14px;">0 mașini</span>
+    //                     </div>
+                        
+    //                     <!-- Preview Canvas pentru traseu -->
+    //                     <div style="margin: 10px 0;">
+    //                         <canvas id="preview-canvas-${route.id}" 
+    //                                 style="width: 100%; height: 120px; border: 1px solid #666; background-color: #f5f5f5; border-radius: 4px;">
+    //                         </canvas>
+    //                     </div>
+    //                     <div style="display: flex; align-items: center; gap: 10px;">
+    //                         <label style="font-size: 14px; min-width: 120px; color: #fff;">Mașini/minut:</label>
+    //                         <input type="range" 
+    //                                id="flow_${route.id}" 
+    //                                min="0" 
+    //                                max="40" 
+    //                                value="10" 
+    //                                style="flex: 1;">
+    //                         <span id="flow-value-${route.id}" style="min-width: 30px; text-align: center; font-weight: bold; color: #fff;">10</span>
+    //                     </div>
+    //                     <div style="margin-top: 8px;">
+    //                         <button class="startRouteBtn" data-route-id="${route.id}" 
+    //                                 style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 4px; margin-right: 5px; cursor: pointer;">
+    //                             ▶ Start
+    //                         </button>
+    //                         <button class="stopRouteBtn" data-route-id="${route.id}" 
+    //                                 style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+    //                             ⏹ Stop
+    //                         </button>
+    //                     </div>
+    //                 </div>
+    //             `;
+    //         });
+    //     }
+
+    //     routesContainer.innerHTML = html;
+        
+    //     // Actualizează contorul total
+    //     this.updateTotalCarsDisplay();
+        
+    //     // Atașează event listeners după ce HTML-ul a fost populat
+    //     this.attachTrafficControlEventListeners();
+        
+        
+    //     // Desenează preview-urile pentru toate rutele după ce sunt adăugate în DOM
+    //     setTimeout(() => {
+    //         this.routes.forEach(route => {
+    //             this.drawRoutePreview(route);
+    //         });
+    //     }, 100);
+    // }
+
+    
 
     /**
-     * Generează HTML-ul pentru interfața de control
+     * Actualizează afișarea contorului total de mașini
      */
-    generateTrafficControlHTML() {
-        let html = `
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h3 style="color: #2c5aa0; margin: 0 0 10px 0;">🚦 Control Flux Trafic</h3>
-                <p style="color: #666; font-size: 14px; margin: 0;">Setează numărul de mașini pe minut pentru fiecare rută</p>
-            </div>
-        `;
-
-        if (this.routes.length === 0) {
-            html += `<div style="text-align: center; color: #888;">Nu există rute definite</div>`;
-        } else {
-            this.routes.forEach(route => {                html += `
-                    <div style="margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
-                        <div style="font-weight: bold; color: #333; margin-bottom: 8px;">${route.name}</div>
-                        <div style="font-size: 12px; color: #666; margin-bottom: 10px;">${route.description}</div>
-                        
-                        <!-- Preview Canvas pentru traseu -->
-                        <div style="margin: 10px 0;">
-                            <canvas id="preview-canvas-${route.id}" 
-                                    style="width: 100%; height: 120px; border: 1px solid #ddd; background-color: #f5f5f5; border-radius: 4px;">
-                            </canvas>
-                        </div>
-                          <div style="display: flex; align-items: center; gap: 10px;">
-                            <label style="font-size: 14px; min-width: 120px;">Mașini/minut:</label>
-                            <input type="range" 
-                                   id="flow_${route.id}" 
-                                   min="0" 
-                                   max="60" 
-                                   value="10" 
-                                   style="flex: 1;">
-                            <span id="flow-value-${route.id}" style="min-width: 30px; text-align: center; font-weight: bold;">10</span>
-                        </div>
-                        <div style="margin-top: 8px;">
-                            <button class="startRouteBtn" data-route-id="${route.id}" 
-                                    style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 4px; margin-right: 5px; cursor: pointer;">
-                                ▶ Start
-                            </button>
-                            <button class="stopRouteBtn" data-route-id="${route.id}" 
-                                    style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
-                                ⏹ Stop
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });        }
-
-        html += `
-            <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #eee;">
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <button id="startAllRoutes" 
-                            style="flex: 1; background: #007bff; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                        🚀 Pornește Tot Traficul
-                    </button>
-                    <button id="stopAllRoutes" 
-                            style="flex: 1; background: #6c757d; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                        🛑 Oprește Tot Traficul
-                    </button>
-                </div>
-                <button id="closeTrafficControl" 
-                        style="width: 100%; background: #333; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">
-                    ✖ Închide Simularea
-                </button>
-            </div>
-        `;
-
-        return html;
+    updateTotalCarsDisplay() {
+        const totalCars = Array.from(this.routeCarCounters.values()).reduce((sum, count) => sum + count, 0);
+        const totalElement = document.getElementById('totalCarsCount');
+        if (totalElement) {
+            totalElement.textContent = `${totalCars} mașini`;
+            totalElement.style.color = totalCars > 0 ? '#28a745' : '#6c757d';
+        }
     }
 
     /**
@@ -496,12 +504,12 @@ export class TrafficSimulator {    constructor() {
                     const routeId = e.target.getAttribute('data-route-id');
                     this.stopRouteGeneration(routeId);
                 });
-            });
-
-            // Butoanele pentru control global
+            });            // Butoanele pentru control global
             const startAllBtn = document.getElementById('startAllRoutes');
             const stopAllBtn = document.getElementById('stopAllRoutes');
             const closeBtn = document.getElementById('closeTrafficControl');
+            const resetBtn = document.getElementById('resetCounters');
+            const exportBtn = document.getElementById('exportStats');
             
             if (startAllBtn) {
                 startAllBtn.addEventListener('click', () => {
@@ -513,9 +521,38 @@ export class TrafficSimulator {    constructor() {
                 stopAllBtn.addEventListener('click', () => {
                     this.stopAllRoutes();
                 });
-            }            if (closeBtn) {
+            }
+            
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                    this.resetRouteCounters();
+                    this.updateCounterDisplay();
+                });
+            }
+            
+            if (exportBtn) {
+                exportBtn.addEventListener('click', () => {
+                    this.exportTrafficStats();
+                });
+            }
+              if (closeBtn) {
                 closeBtn.addEventListener('click', () => {
                     this.stopSimulation();
+                    // Restabilește sidebar-ul la starea originală
+                    if (window.restoreOriginalSidebar) {
+                        window.restoreOriginalSidebar();
+                    }
+                    
+                    // Redirecționează înapoi la pagina de creare/editare cu ID-ul intersecției
+                    const intersectieId = this.getIntersectionId();
+                    console.log("🔍 ID intersecție găsit:", intersectieId);
+                    
+                    if (intersectieId) {
+                        window.location.href = `/Skibidi_traffic/create?id=${intersectieId}`;
+                    } else {
+                        // Fallback la pagina de creare fără ID
+                        window.location.href = '/Skibidi_traffic/create/';
+                    }
                 });
             }
 
@@ -545,10 +582,31 @@ export class TrafficSimulator {    constructor() {
         if (!route || flow === 0) return;
 
         // Calculează intervalul în milisecunde (60000ms = 1 minut)
-        const interval = 60000 / flow;        const intervalId = setInterval(() => {
+        const interval = 60000 / flow;
+        const intervalId = setInterval(() => {
+            console.log("⏰ Timer pentru generare mașini - isSimulationActive:", this.isSimulationActive);
             if (this.isSimulationActive) {
-                const vitezaAleatoare = 1 + Math.random() * 3;
-                adaugaMasina(route.points, vitezaAleatoare, routeId);
+                // Verifică dacă semaforul pentru această rută este verde înainte de a genera mașină
+                if (this.checkTrafficLightForRoute(route)) {
+                    // Dacă e verde, verifică și dacă există loc pe bandă
+                    if (canSpawnCarOnRoute(route.id, route.points)) {
+                        const vitezaAleatoare = 1 + Math.random() * 3;
+                        console.log("🚗 Adaug mașină pe ruta:", routeId, "cu viteza:", vitezaAleatoare);
+                        adaugaMasina(route.points, vitezaAleatoare, routeId);
+                    } else {
+                        console.log("🚫 Nu există loc pe bandă pentru ruta", routeId, "(coloană la start)");
+                    }
+                } else {
+                    // Dacă e roșu, nu spawnezi mașină dacă banda e plină
+                    if (canSpawnCarOnRoute(route.id, route.points)) {
+                        console.log("🔴 Semafor roșu, dar banda nu e plină - nu spawnez mașină");
+                        // Nu adăugăm mașină, doar logăm
+                    } else {
+                        console.log("🔴🚫 Semafor roșu și banda plină - nu spawnez mașină pe ruta", routeId);
+                    }
+                }
+            } else {
+                console.warn("⚠️ Simularea nu este activă - nu adaug mașină");
             }
         }, interval);
 
@@ -596,15 +654,15 @@ export class TrafficSimulator {    constructor() {
             clearInterval(intervalId);
         });
         this.carGenerationIntervals.clear();
-    }
-
-    /**
+    }    /**
      * Ascunde interfața de control al traficului
      */
     hideTrafficControlUI() {
-        if (this.uiPanel) {
-            this.uiPanel.style.display = 'none';
+        const trafficContainer = document.getElementById('traffic-control-container');
+        if (trafficContainer) {
+            trafficContainer.style.display = 'none';
         }
+        this.uiPanelActive = false;
     }
 
     /**
@@ -632,12 +690,15 @@ export class TrafficSimulator {    constructor() {
             this.routeCarCounters.set(routeId, currentCount + 1);
             console.log(`🚗 Route ${routeId}: ${currentCount + 1} cars completed`);
             
+            // Update the UI counter display immediately
+            this.updateCounterDisplay();
+            
             // Log periodic statistics every 10 cars
             if ((currentCount + 1) % 10 === 0) {
                 this.printTrafficStats();
             }
         }
-    }    /**
+    }/**
      * Resetează toate contoarele de rute
      */
     resetRouteCounters() {
@@ -647,6 +708,9 @@ export class TrafficSimulator {    constructor() {
         console.log("🔄 Route counters reset - all counters set to 0");
         this.printTrafficStats();
     }
+
+
+    
 
     /**
      * Obține array cu numărul de mașini pentru fiecare rută
@@ -682,19 +746,13 @@ export class TrafficSimulator {    constructor() {
         
         const totalCars = countersArray.reduce((sum, count) => sum + count, 0);
         console.log(`Total cars: ${totalCars}`);
-    }
-    
-    /**
+    }      /**
      * Actualizează afișarea contorilor în UI
      */
     updateCounterDisplay() {
-        if (!this.uiPanel) return;
-        
-        let totalCars = 0;
-        
+        // Actualizează contoarele individuale pentru fiecare rută
         this.routes.forEach(route => {
             const count = this.routeCarCounters.get(route.id) || 0;
-            totalCars += count;
             
             const countElement = document.getElementById(`count-${route.id}`);
             if (countElement) {
@@ -708,11 +766,8 @@ export class TrafficSimulator {    constructor() {
             }
         });
         
-        const totalElement = document.getElementById('totalCarsCount');
-        if (totalElement) {
-            totalElement.textContent = `${totalCars} mașini`;
-            totalElement.style.color = totalCars > 0 ? '#28a745' : '#6c757d';
-        }
+        // Actualizează contorul total
+        this.updateTotalCarsDisplay();
     }
 
     /**
@@ -746,6 +801,95 @@ export class TrafficSimulator {    constructor() {
     initializeCounterDisplay() {
         // Initialize the counter display with current values
         this.updateCounterDisplay();
+    }
+
+    /**
+     * Verifică dacă semaforul pentru o anumită rută permite generarea mașinilor
+     * @param {Object} route - Ruta pentru care se verifică semaforul
+     * @returns {boolean} - true dacă se pot genera mașini, false altfel
+     */
+    checkTrafficLightForRoute(route) {
+        // Verifică dacă există grupele de semafoare globale
+        if (!window.grupeSemafor || !Array.isArray(window.grupeSemafor)) {
+            console.log("⚠️ window.grupeSemafor nu este disponibil - permit generarea mașinilor");
+            return true; // Permite generarea dacă nu există semafoare
+        }
+        console.log(`🚦 Numărul de grupe de semafoare: ${window.grupeSemafor.length}`);
+
+        // Găsește semaforul care controlează această rută
+        for (let grupa of window.grupeSemafor) {
+            if (!grupa.semafoare || !Array.isArray(grupa.semafoare)) {
+                continue;
+            }
+            
+            for (let semafor of grupa.semafoare) {
+                // Verifică dacă semaforul corespunde cu ruta
+                if (this.isTrafficLightForRoute(semafor, route)) {
+                    // Returnează true doar dacă semaforul este verde
+                    return semafor.status === "green";
+                }
+            }
+        }
+        
+        // Dacă nu găsește un semafor pentru această rută, permite generarea
+        console.log("🟡 Nu s-a găsit semafor pentru ruta", route.name, "- permit generarea");
+        return true;
+    }
+
+    /**
+     * Verifică dacă un semafor controlează o anumită rută
+     * @param {Object} semafor - Semaforul de verificat
+     * @param {Object} route - Ruta de verificat
+     * @returns {boolean} - true dacă semaforul controlează ruta
+     */
+    isTrafficLightForRoute(semafor, route) {
+        if (!semafor.banda || !route.points || route.points.length === 0) {
+            return false;
+        }
+
+        // Verifică dacă primul punct al rutei este aproape de poziția semaforului
+        const punctStart = route.points[0];
+        const distanta = Math.sqrt(
+            Math.pow(semafor.banda.x - punctStart.x, 2) + 
+            Math.pow(semafor.banda.y - punctStart.y, 2)
+        );
+        
+        // Toleranță de 50 pixeli pentru a considera că semaforul controlează ruta
+        return distanta <= 50;
+    }
+
+    /**
+     * Extrage ID-ul intersecției din URL sau din datele disponibile
+     * @returns {string|null} - ID-ul intersecției sau null dacă nu se găsește
+     */
+    getIntersectionId() {
+        // 1. Încearcă să extragă ID-ul din URL (format: /simuleaza/<id>/)
+        const urlPath = window.location.pathname;
+        const match = urlPath.match(/\/simuleaza\/(\d+)\//);
+        if (match) {
+            return match[1];
+        }
+
+        // 2. Încearcă să extragă ID-ul din window.data dacă este disponibil
+        if (window.data) {
+            // Dacă window.data este o intersecție cu ID
+            if (window.data.id) {
+                return window.data.id;
+            }
+            // Dacă window.data are o listă de intersecții
+            if (window.data.intersectii && window.data.intersectii.length > 0 && window.data.intersectii[0].id) {
+                return window.data.intersectii[0].id;
+            }
+        }
+
+        // 3. Fallback: încearcă să extragă din parametrii URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const idParam = urlParams.get('id');
+        if (idParam) {
+            return idParam;
+        }
+
+        return null;
     }
 }
 

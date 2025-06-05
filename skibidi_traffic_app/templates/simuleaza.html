@@ -1,0 +1,144 @@
+{%load static%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skibidi Traffic - Simulation</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/index.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/simuleaza.css' %}?v={{ timestamp }}">
+    {% csrf_token %}
+    <meta name="csrf-token" content="{{ csrf_token }}">
+</head>
+<body>
+    <nav>
+        <ul class="sidebar">
+            <li onclick=hideSidebar()><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg></li>
+            
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href="{% url 'login' %}">Login</a></li>
+            <li><a href="{% url 'signup' %}">Sign up</a></li>
+            <li><a href="{% url 'profile' %}">My account</a></li>
+            <li><a href="{% url 'aboutus' %}">About us</a></li>
+        </ul>
+        <ul>
+            {% load static %}
+            <li><a href="{% url 'home' %}"><img id = "logo" src="{% static 'images/logo.jpg' %}" alt="SkibidiTraffic"></a></li>
+            <li class="hideOnMobile"><a href="{% url 'home' %}">Home</a></li>
+            <li class="hideOnMobile"><a href="{% url 'game' %}">Play</a> </li>
+            <li class="hideOnMobile"><a href="{% url 'create' %}">Create</a> </li>
+            {% if user.is_authenticated %}
+                <li class="hideOnMobile"><a href="{% url 'profile' %}">My account</a></li>
+                <li class="hideOnMobile"><a href="{% url 'logout' %}">Logout</a></li>
+            {% else %}
+                <li class="hideOnMobile"><a href="{% url 'login' %}">Login</a></li>
+                <li class="hideOnMobile"><a href="{% url 'signup' %}">Sign up</a></li>
+            {% endif %}
+
+            <li class="hideOnMobile"><a href="{% url 'aboutus' %}">About us</a></li>
+            <li class="menu-button"onclick=showSidebar()><a href="#"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"/></svg></a></li>
+        </ul>
+    </nav>
+    
+    <div class="behind_navbar hideOnMobile">
+
+    </div>
+
+<div id="drawing_container">  <div id="sidebar">
+
+    <!-- Durata faze semafoare -->
+    <div id="faze-container" style="margin-top: 20px; text-align: center;">
+      <h3 style="color: #4a90e2; margin: 0 0 10px 0;">⏱️ Durata fiecărei faze (secunde)</h3>
+      <div id="faze-inputuri" style="display: flex; flex-direction: column; align-items: center; gap: 10px;"></div>
+    </div>
+
+
+    
+    <!-- Traffic Control UI moved from trafficsimulator.js -->
+    <div id="traffic-control-container" style="display: none;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h3 style="color: #4a90e2; margin: 0 0 10px 0;">🚦 Control Flux Trafic</h3>
+        <p style="color: #ccc; font-size: 14px; margin: 0;">Setează numărul de mașini pe minut pentru fiecare rută</p>
+      </div>
+      
+      <!-- Routes will be dynamically populated here -->
+      <div id="routes-container" >
+        <div style="text-align: center; color: #888;">Nu există rute definite</div>
+      </div>
+      
+      <!-- Total Statistics -->
+      <div style="margin: 20px 0; padding: 15px; border: 2px solid #4a90e2; border-radius: 8px; background: #444; text-align: center;">
+        <h4 style="color: #4a90e2; margin: 0 0 10px 0;">📊 Total Statistici</h4>
+        <div style="font-size: 16px; color: #fff;">
+          <span>Total mașini trecute: </span>
+          <span id="totalCarsCount" style="color: #28a745; font-weight: bold; font-size: 18px;">0 mașini</span>
+        </div>
+      </div>
+      
+      <!-- Control Buttons -->
+      <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #666;">
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+          <button id="startAllRoutes" 
+                  style="flex: 1; background: #007bff; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            🚀 Pornește Tot Traficul
+          </button>
+          <button id="stopAllRoutes" 
+                  style="flex: 1; background: #6c757d; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            🛑 Oprește Tot Traficul
+          </button>
+        </div>
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+          <button id="resetCounters" 
+                  style="flex: 1; background: #ffc107; color: #000; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            🔄 Reset Contoare
+          </button>
+          <button id="exportStats" 
+                  style="flex: 1; background: #17a2b8; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            📊 Export Stats
+          </button>
+        </div>
+        <button id="closeTrafficControl" 
+                style="width: 100%; background: #333; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">
+          ✖ Închide Simularea
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="canvas"></canvas>
+</div>
+    
+    <footer>
+        <p>© Skibidi Traffic 2025 - All rights reserved</p>
+    </footer>
+
+    {%load static%}
+
+    <script>
+    window.data = {{ data|safe }};
+    </script>   
+    <script type="module" src="{% static 'simuleaza.js' %}?v={{ timestamp }}"></script>
+    <script>
+      // datele pe care le folosești în simuleaza.js
+      window.data = {{ data|safe }};
+    </script>   
+
+    <script type="module" src="{% static 'simuleaza.js' %}?v={{ timestamp }}"></script>
+
+    <!-- Aici adaugi codul care trebuie să se execute după ce DOM-ul e gata -->
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const sidebar = document.querySelector('#sidebar');
+        const hideWebkit = document.createElement('style');
+        hideWebkit.textContent = `
+          #sidebar::-webkit-scrollbar {
+            width: 0;
+            background: transparent;
+          }
+        `;
+        document.head.appendChild(hideWebkit);
+      });
+    </script>
+
+</body>
+</html>

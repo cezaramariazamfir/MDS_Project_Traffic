@@ -13,8 +13,7 @@ urlpatterns = [
     path('create', views.create, name='create'),
     path('saved/', views.salvare_intersectie, name='saved'),
     path('incarca/<uuid:id>/', views.incarca_intersectie, name='incarca'),
-    path('simuleaza/', views.simuleaza_intersectie, name='simuleaza'),
-
+    path('simuleaza_intersectie/<uuid:id>/', views.simuleaza_intersectie, name='simuleaza_intersectie')
 ]
 
 from django.conf import settings
