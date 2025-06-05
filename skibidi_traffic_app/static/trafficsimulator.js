@@ -369,81 +369,85 @@ export class TrafficSimulator {    constructor() {
     }    /**
      * Populează interfața de control cu datele rutelor
      */
-    populateTrafficControlUI() {
-        const routesContainer = document.getElementById('routes-container');
-        if (!routesContainer) {
-            console.error("Nu s-a găsit container-ul routes-container");
-            return;
-        }
-
-        let html = '';
+    // populateTrafficControlUI() {
+    //     const routesContainer = document.getElementById('routes-container');
+    //     if (!routesContainer) {
+    //         console.error("Nu s-a găsit container-ul routes-container");
+    //         return;
+    //     }
         
-        if (this.routes.length === 0) {
-            html = `<div style="text-align: center; color: #888;">Nu există rute definite</div>`;
-        } else {
-            this.routes.forEach(route => {
-                // Inițializează contorul pentru această rută dacă nu există
-                if (!this.routeCarCounters.has(route.id)) {
-                    this.routeCarCounters.set(route.id, 0);
-                }
+
+    //     let html = '';
+        
+    //     if (this.routes.length === 0) {
+    //         html = `<div style="text-align: center; color: #888;">Nu există rute definite</div>`;
+    //     } else {
+    //         this.routes.forEach(route => {
+    //             // Inițializează contorul pentru această rută dacă nu există
+    //             if (!this.routeCarCounters.has(route.id)) {
+    //                 this.routeCarCounters.set(route.id, 0);
+    //             }
                 
-                html += `
-                    <div style="margin-bottom: 15px; padding: 15px; border: 1px solid #666; border-radius: 8px; background: #555;">
-                        <div style="font-weight: bold; color: #fff; margin-bottom: 8px;">${route.name}</div>
-                        <div style="font-size: 12px; color: #ccc; margin-bottom: 10px;">${route.description}</div>
+    //             html += `
+    //                 <div style="margin-bottom: 15px; padding: 15px; border: 1px solid #666; border-radius: 8px; background: #555;">
+    //                     <div style="font-weight: bold; color: #fff; margin-bottom: 8px;">${route.name}</div>
+    //                     <div style="font-size: 12px; color: #ccc; margin-bottom: 10px;">${route.description}</div>
                         
-                        <!-- Contor mașini trecute -->
-                        <div style="margin: 10px 0; padding: 8px; background: #444; border-radius: 4px; border: 1px solid #666;">
-                            <span style="color: #fff; font-size: 12px;">Mașini trecute: </span>
-                            <span id="count-${route.id}" style="color: #28a745; font-weight: bold; font-size: 14px;">0 mașini</span>
-                        </div>
+    //                     <!-- Contor mașini trecute -->
+    //                     <div style="margin: 10px 0; padding: 8px; background: #444; border-radius: 4px; border: 1px solid #666;">
+    //                         <span style="color: #fff; font-size: 12px;">Mașini trecute: </span>
+    //                         <span id="count-${route.id}" style="color: #28a745; font-weight: bold; font-size: 14px;">0 mașini</span>
+    //                     </div>
                         
-                        <!-- Preview Canvas pentru traseu -->
-                        <div style="margin: 10px 0;">
-                            <canvas id="preview-canvas-${route.id}" 
-                                    style="width: 100%; height: 120px; border: 1px solid #666; background-color: #f5f5f5; border-radius: 4px;">
-                            </canvas>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <label style="font-size: 14px; min-width: 120px; color: #fff;">Mașini/minut:</label>
-                            <input type="range" 
-                                   id="flow_${route.id}" 
-                                   min="0" 
-                                   max="40" 
-                                   value="10" 
-                                   style="flex: 1;">
-                            <span id="flow-value-${route.id}" style="min-width: 30px; text-align: center; font-weight: bold; color: #fff;">10</span>
-                        </div>
-                        <div style="margin-top: 8px;">
-                            <button class="startRouteBtn" data-route-id="${route.id}" 
-                                    style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 4px; margin-right: 5px; cursor: pointer;">
-                                ▶ Start
-                            </button>
-                            <button class="stopRouteBtn" data-route-id="${route.id}" 
-                                    style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
-                                ⏹ Stop
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-        }
+    //                     <!-- Preview Canvas pentru traseu -->
+    //                     <div style="margin: 10px 0;">
+    //                         <canvas id="preview-canvas-${route.id}" 
+    //                                 style="width: 100%; height: 120px; border: 1px solid #666; background-color: #f5f5f5; border-radius: 4px;">
+    //                         </canvas>
+    //                     </div>
+    //                     <div style="display: flex; align-items: center; gap: 10px;">
+    //                         <label style="font-size: 14px; min-width: 120px; color: #fff;">Mașini/minut:</label>
+    //                         <input type="range" 
+    //                                id="flow_${route.id}" 
+    //                                min="0" 
+    //                                max="40" 
+    //                                value="10" 
+    //                                style="flex: 1;">
+    //                         <span id="flow-value-${route.id}" style="min-width: 30px; text-align: center; font-weight: bold; color: #fff;">10</span>
+    //                     </div>
+    //                     <div style="margin-top: 8px;">
+    //                         <button class="startRouteBtn" data-route-id="${route.id}" 
+    //                                 style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 4px; margin-right: 5px; cursor: pointer;">
+    //                             ▶ Start
+    //                         </button>
+    //                         <button class="stopRouteBtn" data-route-id="${route.id}" 
+    //                                 style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+    //                             ⏹ Stop
+    //                         </button>
+    //                     </div>
+    //                 </div>
+    //             `;
+    //         });
+    //     }
 
-        routesContainer.innerHTML = html;
+    //     routesContainer.innerHTML = html;
         
-        // Actualizează contorul total
-        this.updateTotalCarsDisplay();
+    //     // Actualizează contorul total
+    //     this.updateTotalCarsDisplay();
         
-        // Atașează event listeners după ce HTML-ul a fost populat
-        this.attachTrafficControlEventListeners();
+    //     // Atașează event listeners după ce HTML-ul a fost populat
+    //     this.attachTrafficControlEventListeners();
         
-        // Desenează preview-urile pentru toate rutele după ce sunt adăugate în DOM
-        setTimeout(() => {
-            this.routes.forEach(route => {
-                this.drawRoutePreview(route);
-            });
-        }, 100);
-    }
+        
+    //     // Desenează preview-urile pentru toate rutele după ce sunt adăugate în DOM
+    //     setTimeout(() => {
+    //         this.routes.forEach(route => {
+    //             this.drawRoutePreview(route);
+    //         });
+    //     }, 100);
+    // }
+
+    
 
     /**
      * Actualizează afișarea contorului total de mașini
@@ -810,6 +814,7 @@ export class TrafficSimulator {    constructor() {
             console.log("⚠️ window.grupeSemafor nu este disponibil - permit generarea mașinilor");
             return true; // Permite generarea dacă nu există semafoare
         }
+        console.log(`🚦 Numărul de grupe de semafoare: ${window.grupeSemafor.length}`);
 
         // Găsește semaforul care controlează această rută
         for (let grupa of window.grupeSemafor) {

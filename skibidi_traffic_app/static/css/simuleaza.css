@@ -24,6 +24,8 @@ body{
     padding: 10px;
     overflow-y: auto;         /* pt scroll vertical */
     overflow-x: hidden;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 
     background-color: #444;
     background-image:
@@ -36,6 +38,7 @@ body{
     flex-direction: column;
     gap:10px;
 }
+
 
 
 #drawing_container {

@@ -53,8 +53,6 @@
     </div>
 
 
-
-
     
     <!-- Traffic Control UI moved from trafficsimulator.js -->
     <div id="traffic-control-container" style="display: none;">
@@ -64,7 +62,7 @@
       </div>
       
       <!-- Routes will be dynamically populated here -->
-      <div id="routes-container">
+      <div id="routes-container" >
         <div style="text-align: center; color: #888;">Nu există rute definite</div>
       </div>
       
@@ -120,6 +118,27 @@
     window.data = {{ data|safe }};
     </script>   
     <script type="module" src="{% static 'simuleaza.js' %}?v={{ timestamp }}"></script>
+    <script>
+      // datele pe care le folosești în simuleaza.js
+      window.data = {{ data|safe }};
+    </script>   
+
+    <script type="module" src="{% static 'simuleaza.js' %}?v={{ timestamp }}"></script>
+
+    <!-- Aici adaugi codul care trebuie să se execute după ce DOM-ul e gata -->
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const sidebar = document.querySelector('#sidebar');
+        const hideWebkit = document.createElement('style');
+        hideWebkit.textContent = `
+          #sidebar::-webkit-scrollbar {
+            width: 0;
+            background: transparent;
+          }
+        `;
+        document.head.appendChild(hideWebkit);
+      });
+    </script>
 
 </body>
 </html>

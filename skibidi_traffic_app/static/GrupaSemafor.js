@@ -9,9 +9,12 @@ export default class GrupaSemafor {
   changeColor(nouStatus) {
     this.status = nouStatus;
     for (let semafor of this.semafoare) {
-      semafor.status = nouStatus;
+        semafor.status = nouStatus;
     }
-  }
+    if (nouStatus === 'green' && typeof window.notificareSemaforSchimbat === 'function') {
+        window.notificareSemaforSchimbat(this.semafoare);
+    }
+}
 
   // Opțional: Adaugă un semafor în grupă
   adaugaSemafor(semaforBanda) {
