@@ -1,10 +1,13 @@
 body{
     width: 100vw;
+    overflow-x: hidden;
 }
 
 .behind_navbar{
     height: 70px;
 }
+
+
 
 #canvas {
     flex-grow: 1;
