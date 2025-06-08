@@ -233,3 +233,37 @@ def simuleaza_intersectie(request, id):
             })
         except json.JSONDecodeError:
             return HttpResponseBadRequest('Invalid JSON')
+        
+from stable_baselines3 import PPO
+from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from reinforcement_learning.traffic_env import TrafficEnv
+from reinforcement_learning.train_ppo import test_utilizator, load_model
+
+# === Model și env încărcate o singură dată la nivel global ===
+dummy_env = DummyVecEnv([lambda: TrafficEnv()])
+env = VecNormalize.load("reinforcement_learning/models/vec_normalize.pkl", dummy_env)
+env.training = False
+env.norm_reward = False
+
+model = PPO.load("reinforcement_learning/models/ppo_traffic_model3", env=env)
+
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def primeste_grupe_semafor(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            print("Am primit din JS:", data)
+
+            model, env = load_model()
+            results = test_utilizator(model, env, data)
+            print(results)
+            return JsonResponse({"status": "ok", "results": results})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+    return JsonResponse({"error": "Metodă invalidă (doar POST)"}, status=405)

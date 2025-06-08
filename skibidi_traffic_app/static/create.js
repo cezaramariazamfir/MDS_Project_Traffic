@@ -854,8 +854,8 @@ canvas.addEventListener('click', function (e) {
               
               
               drawScene();
-              document.getElementById("btnDefineRoute").textContent = "🛣️ Definește traseu";
-              modDefinireTraseu = false; // ieșim din modul de definire traseu
+              //document.getElementById("btnDefineRoute").textContent = "🛣️ Definește traseu";
+              //modDefinireTraseu = false; // ieșim din modul de definire traseu
             }
 
             //-------------------------------------------------------------------

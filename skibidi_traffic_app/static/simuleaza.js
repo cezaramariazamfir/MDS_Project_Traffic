@@ -382,6 +382,8 @@ if (window.data) {
     
     // Așteaptă puțin pentru ca UI-ul să se încarce complet, apoi pornește simularea
     setTimeout(() => {
+        const flowsMatrix = trafficSimulator.getFlowsGroupedByTrafficLight();
+        console.log("---------------------->Fluxuri grupate pe grupe de semafoare:", flowsMatrix);
         console.log("🚀 Pornesc simularea de trafic...");
         const simulationStarted = trafficSimulator.startSimulation();
         if (simulationStarted) {
@@ -400,12 +402,62 @@ if (window.data) {
         }else {
             console.error("❌ Nu s-a putut porni simularea!");
         }
-    }, 500);
+    }, 2000);
+
+  // porneşte imediat după ce trafficSimulator este iniţializat
+  let lastFlowsString = null;  // variabilă globală pentru comparație
+
+  const flowInterval = setInterval(() => {
+    if (!trafficSimulator || !trafficSimulator.isActive()) {
+      clearInterval(flowInterval);
+      console.log("--------> Flow-logger oprit - simularea nu mai rulează.");
+      return;
+    }
+
+    const flowsMatrix = trafficSimulator.getFlowsGroupedByTrafficLight();
+    const currentFlowsString = JSON.stringify(flowsMatrix);  // serializat pt. comparație
+
+    if (currentFlowsString !== lastFlowsString) {
+      lastFlowsString = currentFlowsString;  // actualizez cache-ul
+
+      const cleanedNested = flowsMatrix.map(group =>
+        group.map(v => parseInt(v))
+      );
+
+
+      console.log(
+        "---------------------->Fluxuri grupate pe grupe de semafoare:",
+        cleanedNested
+      );
+
+      fetch("js_to_py", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ flows: cleanedNested })
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log("✅ Răspuns primit de la backend:", data);
+      })
+      .catch(error => {
+        console.error("❌ Eroare la trimiterea către backend:", error);
+      });
+    } else {
+      console.log("🔁 Datele nu s-au schimbat – nu trimit.");
+    }
+
+  }, 2000);
+   // rulează la fiecare 2 s; ajustează după nevoie
+
+  // (opţional) îl facem accesibil global pentru debugging
+  window.flowInterval = flowInterval;
+
 
 } else {
   console.error("❌ Nu s-au primit date pentru intersecție.");
 }
-
 
 
 

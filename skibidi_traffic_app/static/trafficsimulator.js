@@ -4,7 +4,8 @@ import { initAnimatieMasini, adaugaMasina, getMasini ,setDrawSceneCallback, gene
  * TrafficSimulator - Clasa pentru controlul avânsat al traficului
  * Permite setarea fluxului de trafic pentru fiecare rută în parte
  */
-export class TrafficSimulator {    constructor() {
+export class TrafficSimulator {    
+    constructor() {
         this.isSimulationActive = false;
         this.routeFlows = new Map(); // Map cu fluxul pentru fiecare rută
         this.carGenerationIntervals = new Map(); // Intervalele pentru generarea mașinilor
@@ -98,14 +99,6 @@ export class TrafficSimulator {    constructor() {
             });
         }
     }
-
-    /**
-     * Generează o descriere pentru o rută bazată pe punctele sale
-     */
-
-
-
-
     
     generateRouteDescription(points) {
         if (points.length < 2) return "Rută incompletă";
@@ -431,7 +424,7 @@ export class TrafficSimulator {    constructor() {
         }
 
         routesContainer.innerHTML = html;
-        
+
         // Actualizează contorul total
         this.updateTotalCarsDisplay();
         
@@ -848,14 +841,13 @@ export class TrafficSimulator {    constructor() {
         }
 
         // Verifică dacă primul punct al rutei este aproape de poziția semaforului
-        const punctStart = route.points[0];
+        const punctStart = route.points[1];
         const distanta = Math.sqrt(
             Math.pow(semafor.banda.x - punctStart.x, 2) + 
             Math.pow(semafor.banda.y - punctStart.y, 2)
         );
         
-        // Toleranță de 50 pixeli pentru a considera că semaforul controlează ruta
-        return distanta <= 50;
+        return distanta <= 1;
     }
 
     /**
@@ -890,6 +882,31 @@ export class TrafficSimulator {    constructor() {
         }
 
         return null;
+    }
+
+    getFlowsGroupedByTrafficLight() {
+        if (!window.grupeSemafor || !Array.isArray(window.grupeSemafor)) {
+            console.warn("--------> nu exista nimic in variabila -grupe de semafoare-");
+            return [];
+        }
+
+        const matrix = window.grupeSemafor.map(grupa => {
+            const flowsForGroup = [];
+
+            // pentru fiecare ruta verific daca un semafor din grupa o controleaza (fac asta pt toate semafoarele )
+            this.routes.forEach(route => {
+                const isControlled = grupa.semafoare
+                    .some(semafor => this.isTrafficLightForRoute(semafor, route));
+
+                if (isControlled) {
+                    flowsForGroup.push(this.routeFlows.get(route.id) ?? 0);
+                }
+            });
+
+            return flowsForGroup;
+        });
+
+        return matrix;
     }
 }
 
@@ -932,3 +949,40 @@ window.getRouteCountersArray = getRouteCountersArray;
 window.getRouteCountersInfo = getRouteCountersInfo;
 window.resetRouteCounters = resetRouteCounters;
 window.printTrafficStats = printTrafficStats;
+
+// export function getFlowPerTrafficGroup(grupeSemafor, trafficSimulator) {
+//     const result = [];
+
+//     grupeSemafor.forEach((grupa, index) => {
+//         let maxFlow = 0;
+
+//         grupa.semafoare.forEach(semafor => {
+//             // Caută toate rutele care pornesc de la acest semafor
+//             trafficSimulator.routes.forEach(route => {
+//                 const firstPoint = route.points[0];
+//                 const dx = semafor.banda.x - firstPoint.x;
+//                 const dy = semafor.banda.y - firstPoint.y;
+//                 const dist = Math.sqrt(dx * dx + dy * dy);
+
+//                 if (dist <= 50) {
+//                     // Sliderul are id-ul flow_route_X_Y
+//                     const slider = document.getElementById(`flow_${route.id}`);
+//                     if (slider) {
+//                         const val = parseInt(slider.value);
+//                         if (!isNaN(val)) {
+//                             maxFlow = Math.max(maxFlow, val);
+//                         }
+//                     }
+//                 }
+//             });
+//         });
+
+//         result.push({
+//             grupa: grupa,
+//             maxFlow: maxFlow
+//         });
+//     });
+
+//     return result;
+// }
+
