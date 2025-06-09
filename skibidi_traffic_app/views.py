@@ -267,3 +267,6 @@ def primeste_grupe_semafor(request):
             return JsonResponse({"error": str(e)}, status=400)
 
     return JsonResponse({"error": "Metodă invalidă (doar POST)"}, status=405)
+
+def simuleaza(request):
+    return render(request, "simuleaza.html")
