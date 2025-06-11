@@ -23,7 +23,6 @@ let dragStartX = 0, dragStartY = 0;
 const json = localStorage.getItem("intersectie_simulare");
 
 if (json) {
-    console.log("🔍 Intersecție găsită în localStorage:", json);
     const inter = JSON.parse(json);
 
     // ✅ Dacă vrei să îl atașezi la `window.data`, o poți face:
@@ -289,10 +288,7 @@ canvas.addEventListener('contextmenu', e => e.preventDefault());
 // Inițializează
 function initSimulare() {
   if (window.data) {
-      console.log("🔍 Date primite din backend:", window.data);
       reconstructFromJSON(window.data);
-      console.log("✅ Intersecție încărcată cu succes.");
-      console.log("🔍 Intersecții rezultate:", intersectii);
 
       setTimeout(() => {
           const intersectie = intersectii[0];
@@ -345,7 +341,6 @@ function initSimulare() {
               estePrimaFaza = false;
           }
 
-          console.log("✅ Grupe de semafoare generate:", grupeSemafor);
 
           // Adaugă inputuri pentru durată faze
           const fazeInputContainer = document.getElementById("faze-inputuri");
@@ -391,31 +386,23 @@ function initSimulare() {
           startSemafoareCycle();
 
       }, 1000);    // Inițializează TrafficSimulator
-      console.log("🚀 Creez TrafficSimulator...");
       trafficSimulator = new TrafficSimulator();
-      console.log("✅ TrafficSimulator creat:", trafficSimulator);
       
       // Inițializează simulatorul cu intersecțiile și callback-ul de desenare
-      console.log("✅ Simulator și intersecții verificate, continuăm...");
       trafficSimulator.initialize(intersectii, drawScene);
-      console.log("✅ Simulator inițializat cu intersecțiile");
       
       // Expune funcția de restabilire a sidebar-ului la nivel global
       window.restoreOriginalSidebar = restoreOriginalSidebar;
       
       // Inițializează sistemul de trafic pentru animația mașinilor
-      console.log("🚀 Inițializez sistemul de trafic...");
       initTrafic(drawScene);
       
       // Așteaptă puțin pentru ca UI-ul să se încarce complet, apoi pornește simularea
       setTimeout(() => {
           const flowsMatrix = trafficSimulator.getFlowsGroupedByTrafficLight();
           console.log("---------------------->Fluxuri grupate pe grupe de semafoare:", flowsMatrix);
-          console.log("🚀 Pornesc simularea de trafic...");
           const simulationStarted = trafficSimulator.startSimulation();
           if (simulationStarted) {
-              console.log("✅ Simularea a fost pornită cu succes!");
-              console.log("🔍 isSimulationActive:", trafficSimulator.isSimulationActive);
               
               // Actualizează contoarele la fiecare 2 secunde
               const updateInterval = setInterval(() => {
@@ -466,14 +453,12 @@ function initSimulare() {
         })
         .then(response => response.json())
         .then(data => {
-          console.log("✅ Răspuns primit de la backend:", data);
+          console.log(" Răspuns primit de la backend:", data);
         })
         .catch(error => {
-          console.error("❌ Eroare la trimiterea către backend:", error);
+          console.error("Eroare la trimiterea către backend:", error);
         });
-      } else {
-        console.log("🔁 Datele nu s-au schimbat – nu trimit.");
-      }
+      } 
 
     }, 2000);
     // rulează la fiecare 2 s; ajustează după nevoie
@@ -483,7 +468,7 @@ function initSimulare() {
 
 
   } else {
-    console.error("❌ Nu s-au primit date pentru intersecție.");
+    console.error(" Nu s-au primit date pentru intersecție.");
   }
 }
 

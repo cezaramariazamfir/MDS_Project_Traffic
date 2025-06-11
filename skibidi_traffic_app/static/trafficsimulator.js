@@ -32,7 +32,6 @@ export class TrafficSimulator {
      */
     extractRoutes() {
         this.routes = [];
-        console.log("🔍 Extragere rute din", this.intersections.length, "intersecții...");
         
         for (let i = 0; i < this.intersections.length; i++) {
             const inter = this.intersections[i];
@@ -89,7 +88,6 @@ export class TrafficSimulator {
                 }
             }
         }
-        console.log("✅ Total rute extrase:", this.routes.length);
         
         // Debug: afișează rutele extrase pentru verificare
         if (this.routes.length === 0) {
@@ -122,20 +120,17 @@ export class TrafficSimulator {
      * Activează simularea și afișează interfața de control
      */
     startSimulation() {
-        console.log("🎯 startSimulation() apelat");
         
         // Sincronizează cu intersecțiile actuale din window.intersectii
         this.extractRoutes();
         console.log("🔍 Rute extrase în startSimulation:", this.routes.length);
         
         if (this.routes.length === 0) {
-            console.error("❌ Nu există rute definite pentru simulare!");
             alert("Nu există rute definite pentru simulare!");
             return false;
         }
 
         this.isSimulationActive = true;
-        console.log("✅ isSimulationActive setat la true");
         
         this.hideIntersectionControls();
         this.showTrafficControlUI();
@@ -145,7 +140,6 @@ export class TrafficSimulator {
             this.routeFlows.set(route.id, 10); // 10 mașini/minut implicit
         });
 
-        console.log("✅ startSimulation() finalizat cu succes");
         return true;
     }/**
      * Oprește simularea și restabilește interfața normală
@@ -216,7 +210,6 @@ export class TrafficSimulator {
      */
     showTrafficControlUI() {
         // Nu mai cream panel separat - folosim container-ul din simuleaza.html
-        console.log("🎨 showTrafficControlUI - folosim container-ul din HTML");
         
         const trafficContainer = document.getElementById('traffic-control-container');
         if (trafficContainer) {
@@ -538,7 +531,6 @@ export class TrafficSimulator {
                     
                     // Redirecționează înapoi la pagina de creare/editare cu ID-ul intersecției
                     const intersectieId = this.getIntersectionId();
-                    console.log("🔍 ID intersecție găsit:", intersectieId);
                     
                     if (intersectieId) {
                         window.location.href = `/Skibidi_traffic/create?id=${intersectieId}`;
@@ -548,6 +540,20 @@ export class TrafficSimulator {
                     }
                 });
             }
+
+            const butonVremeRea = document.getElementById('toggleBadWeather');
+
+            if (butonVremeRea) {
+                butonVremeRea.addEventListener('click', () => {
+                window.vremeReaActivata = !window.vremeReaActivata;
+
+                butonVremeRea.textContent = window.vremeReaActivata
+                        ? '🌧️ Vreme Rea: Activata'
+                        : '🌤️ Vreme Rea: Dezactivata';
+
+                butonVremeRea.style.background = window.vremeReaActivata ? '#6610f2' : '#6c757d';
+                butonVremeRea.style.color = '#fff';            });
+                            } 
 
             // Redimensionează canvas-urile când se schimbă dimensiunea ferestrei
             window.addEventListener('resize', () => {
@@ -577,30 +583,24 @@ export class TrafficSimulator {
         // Calculează intervalul în milisecunde (60000ms = 1 minut)
         const interval = 60000 / flow;
         const intervalId = setInterval(() => {
-            console.log("⏰ Timer pentru generare mașini - isSimulationActive:", this.isSimulationActive);
             if (this.isSimulationActive) {
                 // Verifică dacă semaforul pentru această rută este verde înainte de a genera mașină
                 if (this.checkTrafficLightForRoute(route)) {
                     // Dacă e verde, verifică și dacă există loc pe bandă
-                    if (canSpawnCarOnRoute(route.id, route.points)) {
-                        const vitezaAleatoare = 1 + Math.random() * 3;
-                        console.log("🚗 Adaug mașină pe ruta:", routeId, "cu viteza:", vitezaAleatoare);
+                    if (canSpawnCarOnRoute(route.id, route.points)) { 
+                        let vitezaAleatoare = 1 + Math.random()*2;
+                        if(window.vremeReaActivata) vitezaAleatoare *= 0.5;
                         adaugaMasina(route.points, vitezaAleatoare, routeId);
                     } else {
-                        console.log("🚫 Nu există loc pe bandă pentru ruta", routeId, "(coloană la start)");
                     }
                 } else {
                     // Dacă e roșu, nu spawnezi mașină dacă banda e plină
                     if (canSpawnCarOnRoute(route.id, route.points)) {
-                        console.log("🔴 Semafor roșu, dar banda nu e plină - nu spawnez mașină");
                         // Nu adăugăm mașină, doar logăm
                     } else {
-                        console.log("🔴🚫 Semafor roșu și banda plină - nu spawnez mașină pe ruta", routeId);
                     }
                 }
-            } else {
-                console.warn("⚠️ Simularea nu este activă - nu adaug mașină");
-            }
+            } 
         }, interval);
 
         this.carGenerationIntervals.set(routeId, intervalId);
@@ -681,7 +681,6 @@ export class TrafficSimulator {
         if (this.routeCarCounters.has(routeId)) {
             const currentCount = this.routeCarCounters.get(routeId);
             this.routeCarCounters.set(routeId, currentCount + 1);
-            console.log(`🚗 Route ${routeId}: ${currentCount + 1} cars completed`);
             
             // Update the UI counter display immediately
             this.updateCounterDisplay();
@@ -698,7 +697,6 @@ export class TrafficSimulator {
         for (const routeId of this.routeCarCounters.keys()) {
             this.routeCarCounters.set(routeId, 0);
         }
-        console.log("🔄 Route counters reset - all counters set to 0");
         this.printTrafficStats();
     }
 
@@ -785,7 +783,6 @@ export class TrafficSimulator {
         link.click();
         document.body.removeChild(link);
         
-        console.log("📊 Traffic statistics exported:", stats);
     }
 
     /**
@@ -804,10 +801,9 @@ export class TrafficSimulator {
     checkTrafficLightForRoute(route) {
         // Verifică dacă există grupele de semafoare globale
         if (!window.grupeSemafor || !Array.isArray(window.grupeSemafor)) {
-            console.log("⚠️ window.grupeSemafor nu este disponibil - permit generarea mașinilor");
             return true; // Permite generarea dacă nu există semafoare
         }
-        console.log(`🚦 Numărul de grupe de semafoare: ${window.grupeSemafor.length}`);
+        console.log(`Numărul de grupe de semafoare: ${window.grupeSemafor.length}`);
 
         // Găsește semaforul care controlează această rută
         for (let grupa of window.grupeSemafor) {
@@ -824,8 +820,6 @@ export class TrafficSimulator {
             }
         }
         
-        // Dacă nu găsește un semafor pentru această rută, permite generarea
-        console.log("🟡 Nu s-a găsit semafor pentru ruta", route.name, "- permit generarea");
         return true;
     }
 
@@ -912,6 +906,8 @@ export class TrafficSimulator {
 
 // Instanță globală a simulatorului
 export const trafficSimulator = new TrafficSimulator();
+
+window.vremeReaActivata = false;
 
 // Funcții de conveniență pentru integrarea cu create.js
 export function startTrafficSimulation(intersections, drawSceneCallback) {

@@ -285,23 +285,23 @@ class Masina {
 }
 
 // Helper pentru a crea o mașină nouă cu traseu
-export function creazaMasinaNoua(xStart, yStart, xEnd, yEnd, tipMasina = 0, viteza = 1.5) {
-    viteza = Math.min(viteza, 1.5);
-    const unghi = Math.atan2(yEnd - yStart, xEnd - xStart);
-    const masina = new Masina(xStart, yStart, unghi, tipMasina, viteza);
-    const punctStart = { x: xStart, y: yStart };
-    const punctEnd   = { x: xEnd,   y: yEnd   };
-    masina.setTraseu(punctStart, punctEnd, [punctStart, punctEnd]);
-    return masina;
-}
+// export function creazaMasinaNoua(xStart, yStart, xEnd, yEnd, tipMasina = 0, viteza = 1.5) {
+//     viteza = Math.min(viteza, 1.5);
+//     const unghi = Math.atan2(yEnd - yStart, xEnd - xStart);
+//     const masina = new Masina(xStart, yStart, unghi, tipMasina, viteza);
+//     const punctStart = { x: xStart, y: yStart };
+//     const punctEnd   = { x: xEnd,   y: yEnd   };
+//     masina.setTraseu(punctStart, punctEnd, [punctStart, punctEnd]);
+//     return masina;
+// }
 
 export let masini = [];
 let drawSceneCallback = null;
 let trafficSimulatorRef = null;
 
-export function adaugaMasina(traseu, viteza = 1.5, routeId = null) {
+export function adaugaMasina(traseu, viteza, routeId = null) {
     if (!traseu || traseu.length < 2) return null;
-    viteza = Math.min(viteza, 1.5);
+    viteza = viteza;
     const start = traseu[0];
     const end   = traseu[traseu.length - 1];
     const tipMasina = Math.floor(Math.random() * 8);
