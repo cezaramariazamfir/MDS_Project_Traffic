@@ -592,12 +592,16 @@ export class TrafficSimulator {
                         if(window.vremeReaActivata) vitezaAleatoare *= 0.5;
                         adaugaMasina(route.points, vitezaAleatoare, routeId);
                     } else {
+                        //console.log("Nu exista loc pe banda!");
                     }
                 } else {
-                    // Dacă e roșu, nu spawnezi mașină dacă banda e plină
                     if (canSpawnCarOnRoute(route.id, route.points)) {
-                        // Nu adăugăm mașină, doar logăm
+                        let vitezaAleatoare = 1 + Math.random()*2;
+                        if(window.vremeReaActivata) vitezaAleatoare *= 0.5;
+                        adaugaMasina(route.points, vitezaAleatoare, routeId);
+                        
                     } else {
+                        //console.log("Nu exista loc pe banda!");
                     }
                 }
             } 
