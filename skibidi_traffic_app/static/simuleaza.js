@@ -17,7 +17,7 @@ let scale = 1, offsetX = 0, offsetY = 0;
 let intersectii = [];
 let trafficSimulator = null;
 let dragStartX = 0, dragStartY = 0;
-
+let indexxx = null;
 
 
 const json = localStorage.getItem("intersectie_simulare");
@@ -96,24 +96,8 @@ function startSemafoareCycle() {
 }
 
 
-// function drawScene() {
-//   ctx.setTransform(1, 0, 0, 1, 0, 0);
-//   ctx.clearRect(0, 0, canvas.width, canvas.height);
-//   ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
 
-//   for (let inter of intersectii) {
-//     inter.deseneaza(ctx);
-//   }
-//   deseneazaTraseeSalvate();
-//   for (let grupa of grupeSemafor) {
-//     for (let sem of grupa.semafoare) {
-//     sem.deseneaza(ctx);
-//     }}
-
-//   deseneazaMasini(ctx);
-// }
-
-function drawScene(fazaIndex = null) {
+function drawScene(fazaIndex = indexxx) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
@@ -126,7 +110,7 @@ function drawScene(fazaIndex = null) {
   // Dacă s-a transmis un index de fază valid
   if (fazaIndex !== null && grupeSemafor[fazaIndex]) {
     const grupa = grupeSemafor[fazaIndex];
-
+    
     // Desenează doar traseele asociate semafoarelor din acea grupă
     for (let semafor of grupa.semafoare) {
       const trasee = intersectii[0].trasee.filter(t =>
@@ -371,8 +355,13 @@ function initSimulare() {
                       grupa.time = valoare;
                   }
               });
-              input.addEventListener("click", () => {
-                drawScene(index); 
+              input.addEventListener("mouseenter", () => {
+                drawScene(index);
+                indexxx = index; 
+              });
+
+              input.addEventListener("mouseleave", () => {
+                indexxx = null;
               });
 
               wrapper.appendChild(label);
