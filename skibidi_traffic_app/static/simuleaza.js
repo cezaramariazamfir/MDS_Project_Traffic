@@ -81,10 +81,8 @@ function startSemafoareCycle() {
   });
 
   // Activează grupa curentă
-  setTimeout(() => {
     const grupaCurenta = grupeSemafor[currentGrupaIndex];
     grupaCurenta.changeColor("green");
-  }, 1000); //ii dau 1 secunda ca sa iasa din intersectie celelalte masini care au trecut
 
   // Re-desenează scena
   drawScene();
@@ -102,7 +100,7 @@ function startSemafoareCycle() {
 function drawScene(fazaIndex = indexxx) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
+  ctx.setTransform(scale, 0, 0,scale, offsetX, offsetY);
 
   // Desenează intersecțiile
   for (let inter of intersectii) {
@@ -222,7 +220,7 @@ scale = Math.min(scaleX, scaleY);
 const centruX = minX + latime / 2;
 const centruY = minY + inaltime / 2;
 
-offsetX = canvas.width / 2 - centruX * scale; // forțat mai la stânga
+offsetX = canvas.width / 2 - centruX * scale; 
 offsetY = canvas.height / 2 - centruY * scale;
 
 drawScene();
