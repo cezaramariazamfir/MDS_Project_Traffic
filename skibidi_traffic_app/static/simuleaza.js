@@ -81,8 +81,10 @@ function startSemafoareCycle() {
   });
 
   // Activează grupa curentă
-  const grupaCurenta = grupeSemafor[currentGrupaIndex];
-  grupaCurenta.changeColor("green");
+  setTimeout(() => {
+    const grupaCurenta = grupeSemafor[currentGrupaIndex];
+    grupaCurenta.changeColor("green");
+  }, 1000); //ii dau 1 secunda ca sa iasa din intersectie celelalte masini care au trecut
 
   // Re-desenează scena
   drawScene();
@@ -197,35 +199,34 @@ function reconstructFromJSON(data) {
   intersectii.push(intersectie);
 
   // 🔍 Calculăm bounding box-ul intersecției
-  const puncteTotale = intersectie.listaVarfuri;
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+const puncteTotale = intersectie.listaVarfuri;
+let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
-  puncteTotale.forEach(p => {
-    if (p.x < minX) minX = p.x;
-    if (p.y < minY) minY = p.y;
-    if (p.x > maxX) maxX = p.x;
-    if (p.y > maxY) maxY = p.y;
-  });
+puncteTotale.forEach(p => {
+  if (p.x < minX) minX = p.x;
+  if (p.y < minY) minY = p.y;
+  if (p.x > maxX) maxX = p.x;
+  if (p.y > maxY) maxY = p.y;
+});
 
-  canvas.width = canvas.offsetWidth;
-  canvas.height = canvas.offsetHeight;
+canvas.width = canvas.offsetWidth;
+canvas.height = canvas.offsetHeight;
+const latime = maxX - minX;
+const inaltime = maxY - minY;
 
+const padding = 300;
+const scaleX = (canvas.width - padding) / latime;
+const scaleY = (canvas.height - padding) / inaltime;
+scale = Math.min(scaleX, scaleY);
 
-  const latime = maxX - minX;
-  const inaltime = maxY - minY;
+const centruX = minX + latime / 2;
+const centruY = minY + inaltime / 2;
 
-  const padding = 300; // spațiu liber în jur
-  const scaleX = (canvas.width - padding) / latime;
-  const scaleY = (canvas.height - padding) / inaltime;
-  scale = Math.min(scaleX, scaleY);
+offsetX = canvas.width / 2 - centruX * scale; // forțat mai la stânga
+offsetY = canvas.height / 2 - centruY * scale;
 
-  // 🔄 Calculăm centrul intersecției și poziționăm în centrul canvasului
-  const centruX = minX + latime / 2;
-  const centruY = minY + inaltime / 2;
+drawScene();
 
-  offsetX = canvas.width / 2 - centruX * scale;
-  offsetY = canvas.height / 2 - centruY * scale;
-  drawScene();
 }
 
 // Suport zoom
@@ -278,52 +279,122 @@ function initSimulare() {
           const intersectie = intersectii[0];
 
           const compatibilitate = calculeazaMatriceCompatibilitate(intersectie);
-          const fazeTrasee = determinaFazeSemafor(compatibilitate);
+          const fazeTrasee = determinaFazeSemafor(compatibilitate, intersectie.trasee);
 
           const vector_semafoare = [];
 
           // 🔍 1. Construiește semafoarele o singură dată, pentru toate benzile IN din toate traseele
-          const trasee = intersectie.trasee || [];
-          for (let traseu of trasee) {
-              const dejaExista = vector_semafoare.some(
-                  s => s.stradaIndex === traseu.stradaIndex && s.bandaIndex === traseu.bandaIndex
-              );
+          // const trasee = intersectie.trasee || [];
+          // for (let traseu of trasee) {
+          //     const dejaExista = vector_semafoare.some(
+          //         s => s.stradaIndex === traseu.stradaIndex && s.bandaIndex === traseu.bandaIndex
+          //     );
 
-              if (!dejaExista) {
-                  vector_semafoare.push(new SemaforBanda(intersectie, traseu.stradaIndex, traseu.bandaIndex));
-              }
-          }
+          //     if (!dejaExista) {
+          //         vector_semafoare.push(new SemaforBanda(intersectie, traseu.stradaIndex, traseu.bandaIndex));
+          //     }
+          // }
 
-          let estePrimaFaza = true;
-          for (let faza of fazeTrasee) {
-              const semafoareSet = new Set();
+          // let estePrimaFaza = true;
+          // for (let faza of fazeTrasee) {
+          //     const semafoareSet = new Set();
 
-              for (let idxTraseu of faza) {
-                  const traseu = intersectie.trasee[idxTraseu];
+          //     for (let idxTraseu of faza) {
+          //         const traseu = intersectie.trasee[idxTraseu];
 
-                  const semafor = vector_semafoare.find(
-                      s => s.stradaIndex === traseu.stradaIndex && s.bandaIndex === traseu.bandaIndex
-                  );
+          //         const semafor = vector_semafoare.find(
+          //             s => s.stradaIndex === traseu.stradaIndex && s.bandaIndex === traseu.bandaIndex
+          //         );
 
-                  if (semafor) {
-                      // Folosim un ID unic pentru fiecare semafor ca cheie în Set
-                      const cheieUnica = `${semafor.stradaIndex}_${semafor.bandaIndex}`;
-                      semafoareSet.add(cheieUnica);
-                  }
-              }
+          //         if (semafor) {
+          //             // Folosim un ID unic pentru fiecare semafor ca cheie în Set
+          //             const cheieUnica = `${semafor.stradaIndex}_${semafor.bandaIndex}`;
+          //             semafoareSet.add(cheieUnica);
+          //         }
+          //     }
 
-              // Refacem vectorul de obiecte efective din cheile unice
-              const semafoareFaza = [...semafoareSet].map(cheie => {
-                  const [stradaIndex, bandaIndex] = cheie.split("_").map(Number);
-                  return vector_semafoare.find(s => s.stradaIndex === stradaIndex && s.bandaIndex === bandaIndex);
-              });
+          //     // Refacem vectorul de obiecte efective din cheile unice
+          //     const semafoareFaza = [...semafoareSet].map(cheie => {
+          //         const [stradaIndex, bandaIndex] = cheie.split("_").map(Number);
+          //         return vector_semafoare.find(s => s.stradaIndex === stradaIndex && s.bandaIndex === bandaIndex);
+          //     });
 
-              let culoare = estePrimaFaza ? "green" : "red";
-              const grupa = new GrupaSemafor(culoare, 10, semafoareFaza);
-              grupa.changeColor(culoare);
-              grupeSemafor.push(grupa);
-              estePrimaFaza = false;
-          }
+          //     let culoare = estePrimaFaza ? "green" : "red";
+          //     const grupa = new GrupaSemafor(culoare, 10, semafoareFaza);
+          //     grupa.changeColor(culoare);
+          //     grupeSemafor.push(grupa);
+          //     estePrimaFaza = false;
+          // }
+
+        const trasee = intersectie.trasee || [];
+
+        // 1. Grupare trasee pe bandă și inițializare semafoare
+        const bandaToTrasee = new Map();
+        const benziUnice = new Set();
+
+        for (let i = 0; i < trasee.length; i++) {
+            const t = trasee[i];
+            const cheie = `${t.stradaIndex}_${t.bandaIndex}`;
+
+            if (!bandaToTrasee.has(cheie)) bandaToTrasee.set(cheie, []);
+            bandaToTrasee.get(cheie).push(i);
+
+            if (!benziUnice.has(cheie)) {
+                benziUnice.add(cheie);
+                vector_semafoare.push(new SemaforBanda(intersectie, t.stradaIndex, t.bandaIndex));
+            }
+        }
+
+        // 2. Calculăm ultima fază în care apare fiecare bandă
+        const bandaUltimaFaza = new Map();
+
+        for (let i = 0; i < fazeTrasee.length; i++) {
+            const faza = fazeTrasee[i];
+            for (let idx of faza) {
+                const t = trasee[idx];
+                const cheie = `${t.stradaIndex}_${t.bandaIndex}`;
+                bandaUltimaFaza.set(cheie, i); // suprascriem pentru a reține ultima fază
+            }
+        }
+
+        // 3. Construim grupele de semafoare pentru fiecare fază
+        let estePrimaFaza = true;
+
+        for (let faza of fazeTrasee) {
+            const semafoareSet = new Set();
+            const fazaIndex = fazeTrasee.indexOf(faza);
+
+            for (let [cheie, traseeIdxList] of bandaToTrasee.entries()) {
+                const existaCelPutinUnul = traseeIdxList.some(idx => faza.includes(idx));
+                const esteUltimaFaza = bandaUltimaFaza.get(cheie) === fazaIndex;
+
+                // ✅ punem semaforul doar în ultima fază în care apare traseu de pe bandă
+                if (existaCelPutinUnul && esteUltimaFaza) {
+                    const [stradaIndex, bandaIndex] = cheie.split("_").map(Number);
+                    const semafor = vector_semafoare.find(s =>
+                        s.stradaIndex === stradaIndex && s.bandaIndex === bandaIndex
+                    );
+                    if (semafor) {
+                        semafoareSet.add(cheie);
+                    }
+                }
+            }
+
+            // Transformăm cheile în obiecte semafor
+            const semafoareFaza = [...semafoareSet].map(cheie => {
+                const [stradaIndex, bandaIndex] = cheie.split("_").map(Number);
+                return vector_semafoare.find(s => s.stradaIndex === stradaIndex && s.bandaIndex === bandaIndex);
+            });
+
+            const culoare = estePrimaFaza ? "green" : "red";
+            const grupa = new GrupaSemafor(culoare, 10, semafoareFaza);
+            grupa.changeColor(culoare);
+            grupeSemafor.push(grupa);
+
+            estePrimaFaza = false;
+        }
+
+          
 
 
           // Adaugă inputuri pentru durată faze
@@ -460,4 +531,3 @@ function initSimulare() {
     console.error(" Nu s-au primit date pentru intersecție.");
   }
 }
-

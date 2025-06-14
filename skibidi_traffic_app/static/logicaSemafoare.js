@@ -73,6 +73,7 @@ export function calculeazaMatriceCompatibilitate(intersectie) {
   return matrice;
 }
 
+
 export function determinaFazeSemafor(matrice) { //construieste precursorii gruparilor de semafoare
   const n = matrice.length;
   const asignat = Array(n).fill(false);
@@ -97,8 +98,9 @@ export function determinaFazeSemafor(matrice) { //construieste precursorii grupa
 
     faze.push(fazaCurenta); // vector de indici de trasee compatibile între ele
   }
-    console.log(faze);
+    console.log("FAZE GASITE:", faze);
 
 
   return faze; // ex: [[0, 3, 6], [1, 2], [4, 5]]
 }
+
