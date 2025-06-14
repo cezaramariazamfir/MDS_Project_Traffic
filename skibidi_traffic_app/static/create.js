@@ -10,6 +10,7 @@ import GrupaSemafor from "./GrupaSemafor.js"; // asigură-te că ai importat
 import { determinaFazeSemafor } from "./logicaSemafoare.js";
 
 let grupeSemafor = [];
+let id_salvata = null;
 
 console.log("Loaded JS!!!!");
 const PIXELI_PE_METRU = 11.43;
@@ -1158,7 +1159,7 @@ export async function salveazaIntersectie() {
     });
 
     const json = await res.json();
-
+    id_salvata = json.id;
     if (res.ok) {
       if (idIntersectie) {
         alert("Intersecția a fost actualizată cu succes!");
@@ -1167,7 +1168,7 @@ export async function salveazaIntersectie() {
         alert("Intersecția a fost salvată cu succes!");
         return json.id;
       }
-      //console.log("ID intersecție salvată:", json.id);
+      //console.log("ID intersecție salvată:", json.id); 
     } else {
       alert("Eroare la salvare: " + (json.error || "necunoscută"));
     }
@@ -1223,7 +1224,11 @@ if (idIntersectie) {
   incarcaIntersectie(idIntersectie);
 }
 document.getElementById("simuleazaTrafic").addEventListener("click", async () => {
-  let idDinUrl = new URLSearchParams(window.location.search).get("id");
+  let idDinUrl = new URLSearchParams(window.location.search).get("id")
+
+  if (!idDinUrl) {
+    idDinUrl = id_salvata;
+  }
 
   console.log("ID din URL inainte:", idDinUrl);
   if (!idDinUrl) {
