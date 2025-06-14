@@ -6,20 +6,30 @@ import { initAnimatieMasini, adaugaMasina, getMasini ,setDrawSceneCallback, gene
  */
 export class TrafficSimulator {    
     constructor() {
-        this.isSimulationActive = false;
-        this.routeFlows = new Map(); // Map cu fluxul pentru fiecare rută
-        this.carGenerationIntervals = new Map(); // Intervalele pentru generarea mașinilor
-        this.routes = []; // Lista tuturor rutelor disponibile
-        this.uiPanel = null; // Panoul UI pentru controlul traficului
-        this.intersections = [];
-        this.drawSceneCallback = null;
-        this.routeCarCounters = new Map(); // Contor pentru mașinile care au trecut prin fiecare rută
-        
-        // Resetează contorul de mașini trecute la crearea unei noi instanțe
-        resetContorMasini();
-    }    /**
-     * Inițializează simulatorul cu intersecțiile și callback-ul de desenare
-     */
+    if (TrafficSimulator.instance) {
+        return TrafficSimulator.instance;
+    }
+    this.isSimulationActive = false;
+    this.routeFlows = new Map();
+    this.carGenerationIntervals = new Map();
+    this.routes = [];
+    this.uiPanel = null;
+    this.intersections = [];
+    this.drawSceneCallback = null;
+    this.routeCarCounters = new Map();
+    
+    resetContorMasini();
+
+    TrafficSimulator.instance = this; // salvează instanța
+    }
+
+    static getInstance() {
+    if (!TrafficSimulator.instance) {
+        TrafficSimulator.instance = new TrafficSimulator();
+    }
+    return TrafficSimulator.instance;
+    }
+
     initialize(intersections, drawSceneCallback) {
         this.intersections = intersections;
         this.drawSceneCallback = drawSceneCallback;
@@ -920,7 +930,9 @@ export class TrafficSimulator {
 }
 
 // Instanță globală a simulatorului
-export const trafficSimulator = new TrafficSimulator();
+// export const trafficSimulator = new TrafficSimulator();
+export const trafficSimulator = TrafficSimulator.getInstance();
+
 
 window.vremeReaActivata = false;
 
