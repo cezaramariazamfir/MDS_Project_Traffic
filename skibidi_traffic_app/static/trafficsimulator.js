@@ -588,7 +588,7 @@ export class TrafficSimulator {
             if (this.checkTrafficLightForRoute(route)) {
                 // Dacă e verde, verifică doar ruta curentă
                 if (canSpawnCarOnRoute(route.id, route.points)) { 
-                    let vitezaAleatoare = 1 + Math.random()*2;
+                    let vitezaAleatoare = 1 + Math.random()*1.2;
                     if(window.vremeReaActivata) vitezaAleatoare *= 0.5;
                     adaugaMasina(route.points, vitezaAleatoare, routeId);
                 }
@@ -610,7 +610,7 @@ export class TrafficSimulator {
                 }
 
                 if (canSpawn) {
-                    let vitezaAleatoare = 1 + Math.random()*2;
+                    let vitezaAleatoare = 1 + Math.random()*1.2;
                     if(window.vremeReaActivata) vitezaAleatoare *= 0.5;
                     adaugaMasina(route.points, vitezaAleatoare, routeId);
                 }

@@ -222,7 +222,7 @@ const centruY = minY + inaltime / 2;
 
 offsetX = canvas.width / 2 - centruX * scale; 
 offsetY = canvas.height / 2 - centruY * scale;
-
+window.intersectii = intersectii;
 drawScene();
 
 }

@@ -11,6 +11,8 @@ import {
     getDimensiuniVehicul
 } from './DesignMasini.js';
 
+
+
 // (înainte de declarația clasei)
 // asumăm că window.grupeSemafor este un array de instanțe GrupaSemafor
 // iar fiecare semafor are proprietățile: banda: { x, y }, status: "red"/"green"/"yellow"
@@ -48,6 +50,13 @@ function isRedLightAhead(masina) {
     if (!semaforGasit) {
         return false;
     }
+    let aditional=0;
+    if (typeof masina.areTrecereDePietoni === "function" && window.intersectii) {
+        if (masina.areTrecereDePietoni(window.intersectii)) {
+            aditional = 28;
+
+        }
+    }
 
     // 4) Dacă semaforul e verde, nu oprim
     if (semaforGasit.status === "green") {
@@ -60,14 +69,15 @@ function isRedLightAhead(masina) {
     const distCenter = Math.hypot(dxS, dyS);
 
     // 6) Definim stopBuffer
-    const stopBuffer = masina.lungime * 0.5 + 5;
+    const stopBuffer = masina.lungime * 0.5 + 5+aditional;
 
-    // 7) Debug - decomentează pentru a vedea ce se întâmplă
+    // 7) Debug
     // console.log(`Mașina la (${masina.x.toFixed(1)}, ${masina.y.toFixed(1)}), semafor ${semaforGasit.status}, dist: ${distCenter.toFixed(1)}, buffer: ${stopBuffer.toFixed(1)}`);
 
-    // Returnăm true dacă în următorul pas am trece de linia semaforului
+    // 8) Returnăm true dacă e cazul să oprească
     return distCenter <= stopBuffer + masina.viteza;
 }
+
 
 export function checkAllCarsForGreenLight() {
     for (const masina of masini) {
@@ -110,6 +120,7 @@ class Masina {
 
         // ID-ul rutei (folosit la server sau la notificare)
         this.routeId = routeId || null;
+        
     }
     
     setTraseu(punctStart, punctEnd, traseu) {
@@ -118,6 +129,45 @@ class Masina {
         this.traseu = traseu || [punctStart, punctEnd];
         this.indexTraseu = 0;
     }
+areTrecereDePietoni(intersectii) {
+    if (!this.routeId) {
+        return false;
+    }
+
+    const match = this.routeId.match(/^route_(\d+)_(\d+)$/);
+    if (!match) {
+        return false;
+    }
+
+    const intersectionIndex = parseInt(match[1]);
+    const routeIndex = parseInt(match[2]);
+
+    const intersectie = intersectii[intersectionIndex];
+    if (!intersectie) {
+        return false;
+    }
+
+    const traseu = intersectie.trasee[routeIndex];
+    if (!traseu) {
+        return false;
+    }
+
+    const stradaIndex = traseu.stradaIndex;
+
+    if (!intersectie.listaStrazi || !Array.isArray(intersectie.listaStrazi)) {
+        return false;
+    }
+
+    const strada = intersectie.listaStrazi[stradaIndex];
+    if (!strada) {
+        return false;
+    }
+
+    return strada.trecerePietoni === true;
+}
+
+
+
 
     actualizeaza() {
     // 1. ÎNTOTDEAUNA verificăm starea semaforului
