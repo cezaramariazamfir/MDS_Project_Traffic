@@ -502,10 +502,16 @@ function initSimulare() {
           cleanedNested
         );
 
-        fetch("js_to_py", {
+        function getCSRFToken() {
+            const el = document.querySelector('meta[name="csrf-token"]');
+            return el ? el.getAttribute('content') : '';
+        }
+
+        fetch("/Skibidi_traffic/js_to_py",{
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken()
           },
           body: JSON.stringify({ flows: cleanedNested })
         })

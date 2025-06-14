@@ -241,6 +241,8 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from reinforcement_learning.traffic_env import TrafficEnv
 from reinforcement_learning.train_ppo import test_utilizator, load_model
+from django.http import JsonResponse
+import json
 
 # === Model și env încărcate o singură dată la nivel global ===
 dummy_env = DummyVecEnv([lambda: TrafficEnv()])
