@@ -134,7 +134,7 @@ form > .button-container > button:hover{
 .pub > .pub-content > img{
     margin-top:12px;
     width:200px;
-    border-radius:50%;
+    /* border-radius:50%; */
 }
 
 .pub2 > .pub-content >img{
