@@ -571,45 +571,56 @@ export class TrafficSimulator {
     /**
      * Pornește generarea de mașini pentru o rută specifică
      */
-    startRouteGeneration(routeId) {
-        // Oprește generarea existentă pentru această rută
-        this.stopRouteGeneration(routeId);
+   startRouteGeneration(routeId) {
+    // Oprește generarea existentă pentru această rută
+    this.stopRouteGeneration(routeId);
 
-        const route = this.routes.find(r => r.id === routeId);
-        const flow = this.routeFlows.get(routeId) || 10;
-        
-        if (!route || flow === 0) return;
+    const route = this.routes.find(r => r.id === routeId);
+    const flow = this.routeFlows.get(routeId) || 10;
+    
+    if (!route || flow === 0) return;
 
-        // Calculează intervalul în milisecunde (60000ms = 1 minut)
-        const interval = 60000 / flow;
-        const intervalId = setInterval(() => {
-            if (this.isSimulationActive) {
-                // Verifică dacă semaforul pentru această rută este verde înainte de a genera mașină
-                if (this.checkTrafficLightForRoute(route)) {
-                    // Dacă e verde, verifică și dacă există loc pe bandă
-                    if (canSpawnCarOnRoute(route.id, route.points)) { 
-                        let vitezaAleatoare = 1 + Math.random()*2;
-                        if(window.vremeReaActivata) vitezaAleatoare *= 0.5;
-                        adaugaMasina(route.points, vitezaAleatoare, routeId);
-                    } else {
-                        //console.log("Nu exista loc pe banda!");
-                    }
-                } else {
-                    if (canSpawnCarOnRoute(route.id, route.points)) {
-                        let vitezaAleatoare = 1 + Math.random()*2;
-                        if(window.vremeReaActivata) vitezaAleatoare *= 0.5;
-                        adaugaMasina(route.points, vitezaAleatoare, routeId);
-                        
-                    } else {
-                        //console.log("Nu exista loc pe banda!");
+    // Calculează intervalul în milisecunde (60000ms = 1 minut)
+    const interval = 60000 / flow;
+    const intervalId = setInterval(() => {
+        if (this.isSimulationActive) {
+            // Verifică dacă semaforul pentru această rută este verde înainte de a genera mașină
+            if (this.checkTrafficLightForRoute(route)) {
+                // Dacă e verde, verifică doar ruta curentă
+                if (canSpawnCarOnRoute(route.id, route.points)) { 
+                    let vitezaAleatoare = 1 + Math.random()*2;
+                    if(window.vremeReaActivata) vitezaAleatoare *= 0.5;
+                    adaugaMasina(route.points, vitezaAleatoare, routeId);
+                }
+            } else {
+                // Dacă e roșu, verificăm toate rutele care au același punct de start
+                const routesWithSameStart = this.routes.filter(r => 
+                    r.points.length > 0 && 
+                    route.points.length > 0 &&
+                    r.points[0].x === route.points[0].x && 
+                    r.points[0].y === route.points[0].y
+                );
+
+                let canSpawn = true;
+                for (const sameStartRoute of routesWithSameStart) {
+                    if (!canSpawnCarOnRoute(sameStartRoute.id, sameStartRoute.points)) {
+                        canSpawn = false;
+                        break;
                     }
                 }
-            } 
-        }, interval);
 
-        this.carGenerationIntervals.set(routeId, intervalId);
-        console.log(`Started traffic generation for ${route.name}: ${flow} cars/minute`);
-    }
+                if (canSpawn) {
+                    let vitezaAleatoare = 1 + Math.random()*2;
+                    if(window.vremeReaActivata) vitezaAleatoare *= 0.5;
+                    adaugaMasina(route.points, vitezaAleatoare, routeId);
+                }
+            }
+        } 
+    }, interval);
+
+    this.carGenerationIntervals.set(routeId, intervalId);
+    console.log(`Started traffic generation for ${route.name}: ${flow} cars/minute`);
+}
 
     /**
      * Oprește generarea de mașini pentru o rută specifică
