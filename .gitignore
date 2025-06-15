@@ -398,3 +398,25 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+#--------------------------------------------------------
+# Virtual environment
+.venv/
+
+# VSCode workspace settings
+.vscode/
+
+# Pycache (fișiere compilate Python)
+__pycache__/
+*.py[cod]
+
+# Environment files
+*.env
+
+# Django migrations
+**/migrations/*.py
+**/migrations/*.pyc
+
+# System files
+.DS_Store
+Thumbs.db

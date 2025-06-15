@@ -69,14 +69,57 @@ export default class Strada {
     ctx.beginPath();
     ctx.moveTo(p.x + dx, p.y + dy);
     ctx.lineTo(p.x + dx + dir.x * this.lungime, p.y + dy + dir.y * this.lungime);
-    ctx.strokeStyle = "red";
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = "white";
+    ctx.setLineDash([12,12]);
+    ctx.lineWidth = 2;
     ctx.stroke();
+    ctx.setLineDash([]);
 
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, 5, 0, 2 * Math.PI); // (centruX, centruY, raza, unghiStart, unghiStop)
-    ctx.stroke();
+    // ctx.beginPath();
+    // ctx.arc(p.x, p.y, 5, 0, 2 * Math.PI); // (centruX, centruY, raza, unghiStart, unghiStop)
+    // ctx.stroke();
   }
+
+// _deseneazaMarcajStangaBandaOut(ctx, p, dir, perp, offset) {
+//   // inversăm semnul lui perp pentru a ne deplasa spre partea stângă
+//   const dx = perp.x * -offset;
+//   const dy = perp.y * -offset;
+
+//   ctx.beginPath();
+//   // pornim de la punctul p deplasat spre stânga
+//   ctx.moveTo(p.x + dx, p.y + dy);
+//   // trasăm linia în direcția dir (ieșire) pe lungimea benzilor
+//   ctx.lineTo(
+//     p.x + dx + dir.x * this.lungime,
+//     p.y + dy + dir.y * this.lungime
+//   );
+
+//   ctx.strokeStyle = "white";
+//   ctx.setLineDash([12, 12]); // 12px tras, 12px spațiu
+//   ctx.lineWidth = 2;
+//   ctx.stroke();
+//   // revenim la linie solidă pentru desenele următoare
+//   ctx.setLineDash([]);
+// }
+
+_deseneazaMarcajDreaptaBandaOut(ctx, p, dir, perp, offset) {
+  const dx = perp.x * offset;
+  const dy = perp.y * offset;
+
+  ctx.beginPath();
+  ctx.moveTo(p.x + dx, p.y + dy);
+  ctx.lineTo(
+    p.x + dx + dir.x * this.lungime,
+    p.y + dy + dir.y * this.lungime
+  );
+  ctx.strokeStyle = "white";
+  ctx.setLineDash([12, 12]);
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+
   
   _deseneazaBanda(ctx, p, dir, perp, offset, culoare) {
   const dx = perp.x * offset;
@@ -202,6 +245,11 @@ deseneaza(ctx) {
   for (let i = 0; i < this.benziOut; i++) {
     const offset = banda * (i + 0.5) + spatiu / 2;
     this._deseneazaBanda(ctx, p, dir, perp, offset, "black");
+    //this._deseneazaMarcajStangaBandaOut(ctx, p, dir, perp, offset + 0.5 * banda)
+
+    //const offsetMijloc = this.spatiuVerde / 2 + this.latimeBanda;
+    if(i!=this.benziOut - 1)
+      this._deseneazaMarcajDreaptaBandaOut(ctx, p, dir, perp, offset + 0.5*banda); //Mijloc
   }
 
   // 🟩 Spațiu verde desenat pe centru (dacă există)
@@ -238,14 +286,16 @@ deseneaza(ctx) {
   for (let i = 0; i < this.benziIn; i++) {
     const offset = -banda * (i + 0.5) - spatiu / 2;
     this._deseneazaBanda(ctx, p, dir, perp, offset, "black");
-    this._deseneazaMarcajDreaptaBandaIn(ctx, p, dir, perp, offset - 0.5 * banda);
+    if(i!=this.benziIn - 1)
+      this._deseneazaMarcajDreaptaBandaIn(ctx, p, dir, perp, offset - 0.5 * banda);
   }
 
   // 🔶 Linie galbenă centrală
   ctx.beginPath();
   ctx.moveTo(p.x, p.y);
   ctx.lineTo(p.x + dir.x * this.lungime, p.y + dir.y * this.lungime);
-  ctx.setLineDash([4, 3]);
+  //ctx.setLineDash([4, 3]);
+  ctx.setLineDash([]);
   ctx.strokeStyle = "yellow";
   ctx.lineWidth = 1;
   ctx.stroke();

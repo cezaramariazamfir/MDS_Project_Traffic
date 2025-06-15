@@ -671,6 +671,61 @@ butonIntersectieCustom.addEventListener('click', () => {
     butonIntersectieCustom.classList.toggle('active', modDesenareIntersectie);
 });
 
+//BUTON DESENARE INTERSECTIE PREDEFINITA PATRATA
+const butonIntersectiePatrat = document.getElementById("intersectiePatrat");
+
+// flag pentru modul „intersecție pătrat”
+let modIntersectiePatrat = false;
+
+butonIntersectiePatrat.addEventListener("click", () => {
+  modIntersectiePatrat = true;
+  canvas.style.cursor = "pointer";
+  //alert("Click pe canvas ca să poziționezi intersecția pătrat.");
+});
+
+canvas.addEventListener("click", function(e) {
+  if (modIntersectiePatrat) {
+    // 1️⃣ calculează coordonatele în sistem canvas
+    const { x, y } = getCanvasCoordinates(e);
+
+    // 2️⃣ generează un pătrat de latură 100m (convertit în pixeli)
+    //const lungimeM = 2*40 pixeli * metri/pixeli;
+    const lungimePx = 2*40;
+    const jum = lungimePx / 2;
+
+    const varfuri = [
+      new Punct(x - jum, y - jum),
+      new Punct(x + jum, y - jum),
+      new Punct(x + jum, y + jum),
+      new Punct(x - jum, y + jum),
+    ];
+
+    // 3️⃣ creează intersecția și adaug-o
+    const inter = new Intersectie(varfuri);
+    inter.listaStrazi = [];
+
+    // 4️⃣ pentru fiecare latură, adaugă câte o stradă cu 2 benzi IN, 2 OUT, pietoni și lungime 100m
+    for (let i = 0; i < 4; i++) {
+      const str = new Strada(inter, i, 0.5);
+      str.benziIn = 1;
+      str.benziOut = 1;
+      str.trecerePietoni = true;
+      str.lungime = 30*PIXELI_PE_METRU;
+      inter.listaStrazi.push(str);
+    }
+
+    intersectii.push(inter);
+    drawScene();
+
+    // 5️⃣ curățare stare
+    modIntersectiePatrat = false;
+    canvas.style.cursor = "grab";
+  }
+
+  // …codul tău existent de click pe canvas continuă aici…
+});
+
+
 let stradaSelectata = null;
 const checkboxTrecere = document.getElementById("checkboxTrecere");
 
