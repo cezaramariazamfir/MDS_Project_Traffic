@@ -653,8 +653,8 @@ const butonIntersectieCustom = document.getElementById('intersectieCustom');
 butonIntersectieCustom.addEventListener('click', () => {
     //daca inainte sa dau click desenam intersectia, inseamna ca acum am dat click pt ca ma opresc din desenat
     if (modDesenareIntersectie === true){
-      butonIntersectieCustom.textContent = "Intersectie custom";
-      if (listaVarfuriTemp.length > 3){
+      butonIntersectieCustom.textContent = "🛠️ \n Intersectie custom";
+      if (listaVarfuriTemp.length >= 3){
         if (isCounterClockwise(listaVarfuriTemp)){
           listaVarfuriTemp.reverse();
         }
