@@ -517,8 +517,61 @@ function initSimulare() {
         })
         .then(response => response.json())
         .then(data => {
-          console.log(" Răspuns primit de la backend:", data);
+          console.log("✅ Răspuns primit de la backend:");
+
+          if (data.results && Array.isArray(data.results)) {
+            const container = document.getElementById("faze-inputuri");
+            container.innerHTML = ""; // curățăm inputurile vechi
+
+            data.results.forEach((durata, index) => {
+              const wrapper = document.createElement("div");
+              wrapper.style.marginBottom = "10px";
+
+              const label = document.createElement("label");
+              label.textContent = `Faza ${index + 1}: `;
+              label.style.color = "#fff";
+              label.style.marginRight = "10px";
+
+              const input = document.createElement("input");
+              input.type = "number";
+              input.min = 1;
+              input.value = durata;
+              input.style.padding = "5px";
+              input.style.borderRadius = "5px";
+              input.style.border = "1px solid #ccc";
+              input.style.width = "80px";
+
+              // 🔁 Dacă există grupeSemafor, actualizează și în memorie
+              if (window.grupeSemafor && window.grupeSemafor[index]) {
+                window.grupeSemafor[index].time = durata;
+              }
+
+              input.addEventListener("input", () => {
+                const val = parseInt(input.value, 10);
+                if (!isNaN(val) && val > 0 && window.grupeSemafor[index]) {
+                  window.grupeSemafor[index].time = val;
+                }
+              });
+
+              input.addEventListener("mouseenter", () => {
+                drawScene(index);
+                indexxx = index;
+              });
+
+              input.addEventListener("mouseleave", () => {
+                indexxx = null;
+              });
+
+              wrapper.appendChild(label);
+              wrapper.appendChild(input);
+              container.appendChild(wrapper);
+            });
+          } else {
+            console.warn("⚠️ Nu am primit rezultate valide pentru faze.");
+          }
         })
+
+
         .catch(error => {
           console.error("Eroare la trimiterea către backend:", error);
         });

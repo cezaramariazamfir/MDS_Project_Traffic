@@ -111,8 +111,7 @@ def test_utilizator(model, env, data, steps=1):
     for _ in range(steps):
         action, _ = model.predict(obs)
         obs, reward, done, info = env.step(action)
-        print("Durate:", info[0].get("durations"))
-        print("Reward:", reward[0])
+        return info[0].get("durations")
 
 
 
