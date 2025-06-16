@@ -20,7 +20,7 @@ Scopul aplicației este de a analiza și optimiza fluxul rutier folosind modele 
 
 ## Demo
 
-[![Vezi demo-ul pe YouTube]](https://youtu.be/txCQ33vLFlI)
+[Vezi demo-ul pe YouTube](https://youtu.be/txCQ33vLFlI)
 
 ## Documentație
 
