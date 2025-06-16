@@ -19,6 +19,84 @@ let trafficSimulator = null;
 let dragStartX = 0, dragStartY = 0;
 let indexxx = null;
 
+//Ploaie daca e vremeRea activat: ------------------------------------------
+let rainDrops = []; 
+const RAIN_COUNT = 100;
+
+// function initRain() {
+//   rainDrops = Array.from({length: RAIN_COUNT}, () => ({
+//     x: Math.random() * canvas.width,
+//     y: Math.random() * canvas.height
+//   }));
+// }
+
+// initRain();
+
+// function drawRain(ctx) {
+//   ctx.save();
+//   ctx.strokeStyle = 'rgba(200,200,200,0.4)';
+//   ctx.lineWidth = 1;
+//   for (let drop of rainDrops) {
+//     ctx.beginPath();
+//     ctx.moveTo(drop.x, drop.y);
+//     ctx.lineTo(drop.x + 2, drop.y + 20);
+//     ctx.stroke();
+//     // mișcă picătura
+//     drop.y += 10;
+//     if (drop.y > canvas.height) {
+//       drop.y = -10;
+//       drop.x = Math.random() * canvas.width;
+//     }
+//   }
+//   ctx.restore();
+// }
+
+function initRain() {
+  rainDrops.length = 0;
+  for (let i = 0; i < RAIN_COUNT; i++) {
+    rainDrops.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      length: 10 + Math.random() * 10,
+      speed: 4 + Math.random() * 1,
+      drift: -0.5 + Math.random() * 0.5
+    });
+  }
+}
+
+initRain();
+
+// Desenează și actualizează picăturile
+function drawRain() {
+  // ctx.setTransform(1, 0, 0, 1, 0, 0);            // reset transform
+  // ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // ctx.fillStyle = '#333333';                    // fundal gri mai închis
+  // ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = 'rgba(200,200,200,0.6)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([]);
+
+  for (let d of rainDrops) {
+    ctx.beginPath();
+    ctx.moveTo(d.x, d.y);
+    ctx.lineTo(d.x + d.drift, d.y + d.length);
+    ctx.stroke();
+
+    d.x += d.drift;
+    d.y += d.speed;
+
+    if (d.y > canvas.height) {
+      d.y = -d.length;
+      d.x = Math.random() * canvas.width;
+    }
+    if (d.x < 0) d.x += canvas.width;
+    if (d.x > canvas.width) d.x -= canvas.width;
+  }
+}
+
+//---------------------------------------------------------------------------
+
 
 const json = localStorage.getItem("intersectie_simulare");
 
@@ -102,6 +180,15 @@ function drawScene(fazaIndex = indexxx) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.setTransform(scale, 0, 0,scale, offsetX, offsetY);
 
+  //fundalul gri
+  if(window.vremeReaActivata)
+  {
+    ctx.fillStyle = '#333333';      
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+
+
   // Desenează intersecțiile
   for (let inter of intersectii) {
     inter.deseneaza(ctx);
@@ -140,7 +227,7 @@ function drawScene(fazaIndex = indexxx) {
 
   } else {
     // Desenează toate traseele și semafoarele
-    deseneazaTraseeSalvate();
+    //deseneazaTraseeSalvate();
 
     for (let grupa of grupeSemafor) {
       for (let sem of grupa.semafoare) {
@@ -150,6 +237,10 @@ function drawScene(fazaIndex = indexxx) {
   }
 
   deseneazaMasini(ctx);
+
+  if (window.vremeReaActivata) {
+    drawRain(ctx);
+  }
 }
 
 

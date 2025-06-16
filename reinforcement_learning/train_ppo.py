@@ -1,7 +1,7 @@
 import os
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
-from .traffic_env import TrafficEnv
+from reinforcement_learning.traffic_env import TrafficEnv
 import numpy as np
 
 # === CONFIG ===
@@ -58,7 +58,7 @@ def train_model(model, env, timesteps=1000):
     Continuă antrenamentul modelului pe baza greutăților curente.
     """
     print("🚀 Continuă antrenamentul...")
-    model.learn(total_timesteps=timesteps, progress_bar=True)
+    model.learn(total_timesteps=timesteps, progress_bar=False)
     model.save(MODEL_PATH)
     env.save(VECNORM_PATH)
     print(f"✅ Model salvat la: {MODEL_PATH}.zip")
@@ -118,5 +118,5 @@ def test_utilizator(model, env, data, steps=1):
 # === USAGE ===
 if __name__ == "__main__":
     model, env = load_model()
-    train_model(model, env, timesteps=1000)  # continua învățarea
+    train_model(model, env, timesteps=10000000)  # continua învățarea
     test_model(model, env, steps=10)         # apoi face predicții

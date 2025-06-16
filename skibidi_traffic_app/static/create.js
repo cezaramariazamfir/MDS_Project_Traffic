@@ -211,12 +211,17 @@ deleteStradaBtn.addEventListener("click", () => {
   drawScene();
 });
 
-
+let primaStergere = true;
 
 document.getElementById("btnStergeTraseu").addEventListener("click", () => {
     modStergereTraseu = !modStergereTraseu;
     if (modStergereTraseu) {
-      alert("Click pe un traseu în interiorul unei intersecții pentru a-l șterge.");
+      if (primaStergere)
+      {
+        alert("Click pe un traseu în interiorul unei intersecții pentru a-l șterge.");
+        primaStergere = false;
+      }
+        
       canvas.style.cursor = "pointer";
       document.getElementById("btnStergeTraseu").textContent = "❌ EXIT DELETE";
     } else {

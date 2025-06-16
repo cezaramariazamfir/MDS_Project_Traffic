@@ -563,7 +563,7 @@ export class TrafficSimulator {
 
                 butonVremeRea.style.background = window.vremeReaActivata ? '#6610f2' : '#6c757d';
                 butonVremeRea.style.color = '#fff';            });
-                            } 
+            } 
 
             // Redimensionează canvas-urile când se schimbă dimensiunea ferestrei
             window.addEventListener('resize', () => {
