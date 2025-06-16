@@ -24,4 +24,4 @@ Scopul aplicației este de a analiza și optimiza fluxul rutier folosind modele 
 
 ## Documentație
 
-📄 [Vezi documentația completă (PDF)](https://github.com/cezaramariazamfir/MDS_Project_Traffic/blob/main/SKIBIDI%20Traffic%20-%20documentatie.pdf)
+📄 [Vezi documentația completă (PDF)]([https://github.com/cezaramariazamfir/MDS_Project_Traffic/blob/main/SKIBIDI%20Traffic%20-%20documentatie.pdf](https://github.com/cezaramariazamfir/MDS_Project_Traffic/blob/main/SKIBIDI%20Traffic%20-%20documentatie%20(1).pdf))
