@@ -18,7 +18,7 @@ Scopul aplicației este de a analiza și optimiza fluxul rutier folosind modele 
 - [David Muscalu](https://github.com/muscalu-david)
 - [Rares Cozma](https://github.com/rarescozma25)
 
-  ## Demo
+## Demo
 
 [![Vezi demo-ul pe YouTube](https://img.youtube.com/vi/LINK_CĂTRE_VIDEO/0.jpg)](https://www.youtube.com/watch?v=LINK_CĂTRE_VIDEO)
 
