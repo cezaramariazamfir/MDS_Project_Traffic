@@ -148,75 +148,11 @@ def incarca_intersectie(request, id):
         raise Http404("Intersecția nu a fost găsită sau nu îți aparține.")
 
 
-#--------------------------------------------------------------------------------------
-
-
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 import json
 
-# @csrf_exempt
-# def simuleaza_intersectie(request):
-#     if request.method == "POST":
-#         payload = json.loads(request.body)
-#         intersectie_id = payload.get("id")
 
-#         if not intersectie_id:
-#             return JsonResponse({"error": "ID intersecție lipsă"}, status=400)
-
-#         # aici ai putea face validări dacă intersecția chiar există în DB
-
-#         return redirect(f"/Skibidi_traffic/simuleaza/{intersectie_id}/")
-
-
-# def simuleaza_intersectie(request, id):
-#     # Aici poți verifica dacă intersecția există, aparține utilizatorului etc.
-#     try:
-#         intersectie = IntersectieSalvata.objects.get(id=id, user=request.user)
-#     except IntersectieSalvata.DoesNotExist:
-#         raise Http404("Intersecția nu există sau nu îți aparține.")
-
-#     return render(request, "simuleaza.html", {
-#         "intersectie_id": id,
-#         "intersectie": intersectie
-#     })
-#     # try:
-#     #     intersectie = IntersectieSalvata.objects.get(id=id, user=request.user)
-#     #     return JsonResponse(intersectie.data, safe=False)
-#     # except IntersectieSalvata.DoesNotExist:
-#     #     raise Http404("Intersecția nu a fost găsită sau nu îți aparține.")
-
-
-# from django.shortcuts import render
-# from django.views.decorators.csrf import csrf_exempt
-# import json
-
-# @csrf_exempt
-# def simuleaza_intersectie(request, id):
-#     if request.method == "POST":
-#         try:
-#             payload = json.loads(request.body)
-#             intersectie_json = json.dumps(payload["data"])  # păstrează forma inițială
-#             context = {
-#                 "intersectie_json": intersectie_json,
-#                 "intersectie_id": id
-#             }
-#             return render(request, "simuleaza.html", context)
-#         except Exception as e:
-#             return JsonResponse({"error": str(e)}, status=400)
-
-
-
-# def simuleaza_intersectie(request, id):
-#     if request.method == 'POST':
-#         try:
-#             data = json.loads(request.body)
-#             # Poți transmite datele către template dacă este nevoie
-#             return render(request, 'simuleaza.html', {'intersectie_id': id, 'data': data})
-#         except json.JSONDecodeError:
-#             return HttpResponseBadRequest('Invalid JSON')
-#     else:
-#         return HttpResponseBadRequest('Invalid method')
 
 from django.utils.safestring import mark_safe
 import json
@@ -263,6 +199,11 @@ def primeste_grupe_semafor(request):
 
             model, env = load_model()
             results = test_utilizator(model, env, data)
+            try:
+                results = [int(round(x)) for x in results]
+            except Exception as e:
+                print("❌ Eroare la convertirea în int:", str(e))
+                results = []
             print(results)
             return JsonResponse({"status": "ok", "results": results})
         except Exception as e:
