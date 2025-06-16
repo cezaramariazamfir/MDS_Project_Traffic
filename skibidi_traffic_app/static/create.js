@@ -1115,6 +1115,12 @@ export async function salveazaIntersectie() {
       return;
     }
   }
+//pt teste
+//   nume = prompt("Dă un nume intersecției:");
+// if (!nume || nume.trim() === "") {
+//     alert("Numele este necesar.");
+//     return;
+// }
 
   // Construim JSON-ul compatibil cu modelul Django
   console.log("semafoarele inainte de bd" , grupeSemafor);
