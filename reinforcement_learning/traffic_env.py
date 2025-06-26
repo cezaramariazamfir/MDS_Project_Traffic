@@ -6,7 +6,7 @@ class TrafficEnv(gym.Env):
     def __init__(self):
         super(TrafficEnv, self).__init__()
 
-        self.num_phases = 3  # Număr de faze de semafor
+        self.num_phases = 2  # Număr de faze de semafor
         self.min_duration = 3
         self.max_duration = 30
 

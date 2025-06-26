@@ -19,8 +19,10 @@ let trafficSimulator = null;
 let dragStartX = 0, dragStartY = 0;
 let indexxx = null;
 
+
 let rainDrops = []; 
 const RAIN_COUNT = 100;
+
 
 function initRain() {
   rainDrops.length = 0;
@@ -65,6 +67,10 @@ function drawRain() {
     if (d.x > canvas.width) d.x -= canvas.width;
   }
 }
+
+
+//---------------------------------------------------------------------------
+
 
 
 const json = localStorage.getItem("intersectie_simulare");
@@ -149,6 +155,7 @@ function drawScene(fazaIndex = indexxx) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.setTransform(scale, 0, 0,scale, offsetX, offsetY);
 
+
 //fundalul gri
   if(window.vremeReaActivata)
   {
@@ -159,6 +166,7 @@ function drawScene(fazaIndex = indexxx) {
   else{
     canvas.style.backgroundColor = '#ffffff'; // fundal alb
   }
+
 
   // Desenează intersecțiile
   for (let inter of intersectii) {
@@ -198,7 +206,7 @@ function drawScene(fazaIndex = indexxx) {
 
   } else {
     // Desenează toate traseele și semafoarele
-    deseneazaTraseeSalvate();
+    //deseneazaTraseeSalvate();
 
     for (let grupa of grupeSemafor) {
       for (let sem of grupa.semafoare) {

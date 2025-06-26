@@ -1202,6 +1202,12 @@ export async function salveazaIntersectie() {
       alert("Numele trebuie sa fie mai scurt de 25 de caractere!")
     }
   }
+//pt teste
+//   nume = prompt("Dă un nume intersecției:");
+// if (!nume || nume.trim() === "") {
+//     alert("Numele este necesar.");
+//     return;
+// }
 
   // Construim JSON-ul compatibil cu modelul Django
   console.log("semafoarele inainte de bd" , grupeSemafor);
